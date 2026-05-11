@@ -1,0 +1,240 @@
+openapi: 3.1.0
+info:
+  title: Claude Code Knowledge Management MVP
+  version: 0.1.0
+  description: >-
+    Logical service contract for the local CLI MVP. The runtime interface is CLI,
+    but these endpoints define the stable request/response boundary for AI-proxy-led,
+    prompt-driven ingest, query, and check over the local markdown knowledge base.
+servers:
+  - url: http://localhost/_local_only
+paths:
+  /ingestions:
+    post:
+      summary: Ingest one approved raw document through a Claude Code style AI proxy flow
+      operationId: createIngestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestionRequest'
+      responses:
+        '201':
+          description: Ingestion committed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestionResponse'
+        '400':
+          description: Invalid, unapproved, or non-citable raw input
+        '409':
+          description: Atomic commit failed; no partial state exposed
+        '422':
+          description: AI proxy output failed validation, lacked valid citations, or was incomplete
+  /queries:
+    post:
+      summary: Answer a question from the current knowledge snapshot with prompt-driven model synthesis
+      operationId: createQuery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+      responses:
+        '200':
+          description: Query answered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+  /checks:
+    post:
+      summary: Run prompt-driven citation consistency check for one wiki page
+      operationId: createCheck
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckRequest'
+      responses:
+        '200':
+          description: Check completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckResponse'
+components:
+  schemas:
+    Citation:
+      type: object
+      required: [chunkId, rawPath]
+      properties:
+        chunkId:
+          type: string
+          example: raw/llm-wiki-architecture#chunk-12
+          description: Stable evidence anchor selected by the AI proxy and validated by the runtime
+        rawPath:
+          type: string
+          example: XK-Knowledge/RAW/article/llm-wiki-architecture.md
+        locator:
+          type: string
+          example: heading:五、Wiki 层 > paragraph:3
+    PageRef:
+      type: object
+      required: [pageId, title, path]
+      properties:
+        pageId:
+          type: string
+        title:
+          type: string
+        path:
+          type: string
+    CompletenessReport:
+      type: object
+      required: [status, summary]
+      properties:
+        status:
+          type: string
+          enum: [complete, rejected]
+        summary:
+          type: string
+        omittedAreas:
+          type: array
+          items:
+            type: string
+    IngestionRequest:
+      type: object
+      required: [rawPath]
+      properties:
+        rawPath:
+          type: string
+          description: Path relative to `XK-Knowledge/`
+        approved:
+          type: boolean
+          default: true
+        relationHints:
+          type: array
+          description: Optional hints passed into the AI context; they do not replace model judgment
+          items:
+            type: string
+        invokedVia:
+          type: string
+          enum: [cli, claude_skill]
+          default: cli
+          description: Preferred entry layer; Claude Code integration uses slash skill/command while reusing the same local CLI semantics.
+        proxyMode:
+          type: string
+          enum: [claude_code]
+          default: claude_code
+          description: The AI proxy responsible for chunking, extraction, completeness checking, and draft generation.
+        promptProfile:
+          type: string
+          default: ingest_default
+          description: Pre-authored prompt profile used for this ingest execution.
+    IngestionResponse:
+      type: object
+      required: [page, updatedFiles, completeness]
+      properties:
+        page:
+          $ref: '#/components/schemas/PageRef'
+        updatedFiles:
+          type: array
+          items:
+            type: string
+          example:
+            - XK-Knowledge/WIKI/concept/pages/llm-wiki-architecture.md
+            - XK-Knowledge/WIKI/INDEX.md
+            - XK-Knowledge/WIKI/LINK.md
+            - XK-Knowledge/WIKI/concept/INDEX.md
+            - XK-Knowledge/WIKI/concept/LINK.md
+            - XK-Knowledge/LOG/2026-05-09.md
+        completeness:
+          $ref: '#/components/schemas/CompletenessReport'
+    QueryRequest:
+      type: object
+      required: [question]
+      properties:
+        question:
+          type: string
+        maxLinkedHops:
+          type: integer
+          default: 1
+          minimum: 0
+          maximum: 1
+          description: Deterministic context expansion limit before model synthesis
+        invokedVia:
+          type: string
+          enum: [cli, claude_skill]
+          default: cli
+          description: Preferred entry layer; Claude Code integration uses slash skill/command while reusing the same local CLI semantics.
+        proxyMode:
+          type: string
+          enum: [claude_code]
+          default: claude_code
+        promptProfile:
+          type: string
+          default: query_default
+    QueryResponse:
+      type: object
+      required: [answer, pages, citations]
+      properties:
+        answer:
+          type: string
+        pages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PageRef'
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Citation'
+    CheckRequest:
+      type: object
+      required: [pageId]
+      properties:
+        pageId:
+          type: string
+        strict:
+          type: boolean
+          default: true
+        invokedVia:
+          type: string
+          enum: [cli, claude_skill]
+          default: cli
+          description: Preferred entry layer; Claude Code integration uses slash skill/command while reusing the same local CLI semantics.
+        proxyMode:
+          type: string
+          enum: [claude_code]
+          default: claude_code
+        promptProfile:
+          type: string
+          default: check_default
+    Finding:
+      type: object
+      required: [type, severity, excerpt]
+      properties:
+        type:
+          type: string
+          enum: [missing_citation, overstated_claim]
+        severity:
+          type: string
+          enum: [warning, error]
+        excerpt:
+          type: string
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Citation'
+    CheckResponse:
+      type: object
+      required: [page, findings]
+      properties:
+        page:
+          $ref: '#/components/schemas/PageRef'
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Finding'

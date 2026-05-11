@@ -1,0 +1,92 @@
+contract_version: 1
+name: xk-ingest-helper
+purpose: >-
+  Defines the structured boundary between the Claude Code `/xk-ingest` skill
+  orchestrator and the thin helper responsible for validation and atomic commit.
+
+input:
+  type: object
+  required:
+    - raw_document
+    - knowledge_mutation_set
+    - target_roots
+  properties:
+    raw_document:
+      type: object
+      required: [raw_id, source_path, ingest_allowed]
+      properties:
+        raw_id:
+          type: string
+        source_path:
+          type: string
+        ingest_allowed:
+          type: boolean
+    knowledge_mutation_set:
+      type: object
+      required:
+        - raw_chunks
+        - wiki_page_draft
+        - index_draft
+        - link_draft
+        - log_draft
+        - completeness_report
+      properties:
+        raw_chunks:
+          type: array
+        wiki_page_draft:
+          type: object
+        index_draft:
+          type: array
+        link_draft:
+          type: array
+        log_draft:
+          type: object
+        completeness_report:
+          type: object
+    target_roots:
+      type: object
+      required: [wiki_root, log_root, system_root]
+      properties:
+        wiki_root:
+          type: string
+        log_root:
+          type: string
+        system_root:
+          type: string
+
+validation_rules:
+  - reject_when_raw_not_approved
+  - reject_when_required_mutation_parts_missing
+  - reject_when_no_valid_raw_citations
+  - reject_when_completeness_report_empty
+  - reject_when_target_paths_cannot_be_materialized
+
+commit_behavior:
+  mode: atomic
+  writes:
+    - wiki_page
+    - global_index
+    - global_link
+    - log_entry
+  rollback_on_any_failure: true
+
+output:
+  type: object
+  required:
+    - status
+    - rolled_back
+    - diagnostics
+  properties:
+    status:
+      type: string
+      enum: [committed, rejected, failed]
+    rolled_back:
+      type: boolean
+    written_paths:
+      type: array
+      items:
+        type: string
+    diagnostics:
+      type: array
+      items:
+        type: string
