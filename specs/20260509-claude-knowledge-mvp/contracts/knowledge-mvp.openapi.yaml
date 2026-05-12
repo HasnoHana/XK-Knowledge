@@ -122,9 +122,9 @@ components:
             type: string
         invokedVia:
           type: string
-          enum: [cli, claude_skill]
+          enum: [cli, claude_command]
           default: cli
-          description: Preferred entry layer; Claude Code integration uses slash skill/command while reusing the same local CLI semantics.
+          description: Preferred entry layer; Claude Code integration uses slash command while reusing the same local CLI semantics.
         proxyMode:
           type: string
           enum: [claude_code]
@@ -167,9 +167,9 @@ components:
           description: Deterministic context expansion limit before model synthesis
         invokedVia:
           type: string
-          enum: [cli, claude_skill]
+          enum: [cli, claude_command]
           default: cli
-          description: Preferred entry layer; Claude Code integration uses slash skill/command while reusing the same local CLI semantics.
+          description: Preferred entry layer; Claude Code integration uses slash command while reusing the same local CLI semantics.
         proxyMode:
           type: string
           enum: [claude_code]
@@ -202,9 +202,9 @@ components:
           default: true
         invokedVia:
           type: string
-          enum: [cli, claude_skill]
+          enum: [cli, claude_command]
           default: cli
-          description: Preferred entry layer; Claude Code integration uses slash skill/command while reusing the same local CLI semantics.
+          description: Preferred entry layer; Claude Code integration uses slash command while reusing the same local CLI semantics.
         proxyMode:
           type: string
           enum: [claude_code]

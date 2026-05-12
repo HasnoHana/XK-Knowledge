@@ -1,4 +1,4 @@
-# Quickstart — Claude Code Skills 驱动的知识管理系统 MVP
+# Quickstart — Claude Code 命令驱动的知识管理系统 MVP
 
 ## Prerequisites
 - Claude Code 风格运行环境可用
@@ -16,7 +16,7 @@
 ## 1. 准备一份可摄入的 Raw
 - 将原始资料放入仓库根目录下 `RAW/` 的合适子目录
 - 人工确认该资料可信且值得进入知识库
-- 确认该 Raw 可被 skill 读取，并且来源路径稳定
+- 确认该 Raw 可被 `/xk-ingest` 的 runtime 读取，并且来源路径稳定
 
 ## 2. 通过 `/xk-ingest` 发起摄入
 在 Claude Code 会话中运行：
@@ -28,13 +28,13 @@
 这是当前 MVP 的主用户路径。
 
 预期执行流：
-1. skill 读取 Raw、Constitution、候选 Laws、现有 `INDEX.md` / `LINK.md` 知识上下文与 ingest prompt
-2. skill 触发 direct ingest runtime
+1. `.claude/commands/xk-ingest.md` 负责定义用户输入协议与结果输出约束
+2. direct ingest runtime 读取 Raw、Constitution、候选 Laws、现有 `INDEX.md` / `LINK.md` 知识上下文与 ingest prompt
 3. runtime 生成 `KnowledgeMutationSet`
 4. Agent 在 Raw 证据约束下把内容重组为适合知识消费的 Wiki Page，而不是按原文顺序压缩成摘要页
 5. thin helper 校验返回结构、引用合法性与完整性
 6. thin helper 原子写入 page / index / link / log
-7. skill 向用户返回结果摘要或失败原因
+7. 用户看到的是本次 ingest 的结果摘要或失败原因，而不是 helper 内部细节
 
 ## 3. 成功结果验证
 执行成功后，应能看到：
@@ -43,7 +43,7 @@
 - 页面结构应体现知识组织，而不是沿 Raw 原始章节顺序压缩复述
 - `WIKI/INDEX.md` 与 `WIKI/LINK.md` 被同步更新
 - `LOG/<date>.md` 被追加
-- skill 返回本次 ingest 的结果摘要，而不是 helper 内部细节
+- `/xk-ingest` 返回本次 ingest 的结果摘要，而不是内部运行细节
 
 ## 4. 失败结果验证
 以下情况应整体失败且无部分落盘：

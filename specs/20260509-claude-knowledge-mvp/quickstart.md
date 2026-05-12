@@ -47,7 +47,7 @@ cp ../docs/llm-wiki-architecture.md RAW/article/llm-wiki-architecture.md
 python -m src.claude_knowledge_mvp.cli ingest RAW/article/llm-wiki-architecture.md --approved
 ```
 
-如果已在 Claude Code 中接入最小入口层，优先通过：
+如果已在 Claude Code 中接入最小命令入口层，优先通过：
 ```text
 /xk-ingest RAW/article/llm-wiki-architecture.md
 ```
@@ -64,7 +64,7 @@ python -m src.claude_knowledge_mvp.cli ingest RAW/article/llm-wiki-architecture.
 python -m src.claude_knowledge_mvp.cli query "index 是怎么工作的?"
 ```
 
-如果已在 Claude Code 中接入最小入口层，优先通过：
+如果已在 Claude Code 中接入最小命令入口层，优先通过：
 ```text
 /xk-query index 是怎么工作的?
 ```
@@ -79,7 +79,7 @@ python -m src.claude_knowledge_mvp.cli query "index 是怎么工作的?"
 python -m src.claude_knowledge_mvp.cli check --page-id llm-wiki-architecture
 ```
 
-如果已在 Claude Code 中接入最小入口层，优先通过：
+如果已在 Claude Code 中接入最小命令入口层，优先通过：
 ```text
 /xk-check --page-id llm-wiki-architecture
 ```
@@ -106,7 +106,7 @@ pytest tests/unit tests/integration tests/contract
 - 重新运行 ingest
 - 验证 `RAW / WIKI / LOG` 的可见目录没有出现部分更新结果，且 `.system/` 中的 staging 状态已被清理或回滚
 
-## 9. Claude Code 最小入口层约束
+## 9. Claude Code 最小命令入口层约束
 - Claude Code 中的首选入口是 `/xk-ingest`、`/xk-query`、`/xk-check`
 - slash 入口层只负责参数转发与体验收敛，底层继续复用 `XK-Knowledge` 本地 CLI
 - 本轮不以 MCP 为前置条件，优先保证 Prompt Pack 驱动的 AI 主导流程与本地知识库可移植性

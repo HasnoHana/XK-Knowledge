@@ -1,8 +1,9 @@
 contract_version: 1
 name: xk-ingest-helper
 purpose: >-
-  Defines the structured boundary between the Claude Code `/xk-ingest` skill
-  orchestrator and the thin helper responsible for validation and atomic commit.
+  Defines the structured boundary between the Claude Code `/xk-ingest`
+  command/runtime orchestrator and the thin helper responsible for validation
+  and atomic commit.
 
 input:
   type: object

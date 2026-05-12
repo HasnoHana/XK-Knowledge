@@ -8,7 +8,7 @@
 ## Clarifications
 
 ### Session 2026-05-09
-- Q: 当前最小 MVP 如何以最小代价集成到 Claude Code？ → A: 优先用 Claude Code slash skill/command 作为入口层，命名采用 `/xk-ingest`、`/xk-query`、`/xk-check`；底层仍复用 `XK-Knowledge` 本地 CLI；目标是最小改造、保持可移植性，本轮不引入 MCP 作为前提。
+- Q: 当前最小 MVP 如何以最小代价集成到 Claude Code？ → A: 优先用 Claude Code slash command 作为入口层，命名采用 `/xk-ingest`、`/xk-query`、`/xk-check`；底层仍复用 `XK-Knowledge` 本地 CLI；目标是最小改造、保持可移植性，本轮不引入 MCP 作为前提。
 - Q: Ingest 的执行主导权和实现边界是什么？ → A: 从 ingest 开始，必须经由 Claude Code 这类 AI Proxy 在预设提示词引导下完成 Raw chunk 划分、Raw 提炼、完整性检查、wiki 落库草稿，以及 index/link/log 修正草稿；全程由 LLM 主导，工程化只负责必要约束、结构化校验和原子提交兜底。
 
 ## User Scenarios & Testing *(mandatory)*
@@ -25,7 +25,7 @@
 - ingest 必须经由 Claude Code 风格的 AI Proxy 执行，而不是由工程规则直接主导页面生成。
 - ingest 读取单份 Raw、`CONSTITUTION.md`、候选 `WIKI/<type>/LAWS.md`、现有索引/关系上下文与预设提示词，由大模型完成 Raw chunk 划分、知识提炼、类型判定、标题命名、章节组织、关系建议和引用选择。
 - 页面必须包含摘要、结构化知识、溯源标注和基础元信息。
-- 面向 Claude Code 的首选用户入口采用 slash skill/command `/xk-ingest`；该入口只负责调用底层本地 CLI，不额外承载业务逻辑。
+- 面向 Claude Code 的首选用户入口采用 slash command `/xk-ingest`；该入口只负责调用底层本地 CLI，不额外承载业务逻辑。
 - 每条知识都必须能回链到 Raw 的具体段落或 chunk；无引用内容不得落库。
 - ingest MUST 以原子方式完成 wiki 页面写入，以及 `index.md`（主题索引）、`link.md`（页面关系）、`log.md`（追加操作记录）的同步更新；任一写入失败时不得留下部分成功状态。
 - 页面间关系在 MVP 中至少支持 `related`、`depends_on`、`superseded_by` 三类；反向关系可由系统补齐。
@@ -52,7 +52,7 @@
 - query 先基于 `index.md` 定位候选页面，再读取 `link.md` 中与候选页面相关的关系，扩展一跳上下文。
 - query 的最终答案组织、证据取舍和引用链表达由大模型在预设提示词引导下完成，而不是规则模板直接拼接。
 - 系统从命中的 wiki 页面读取结构化知识并组织答案。
-- 面向 Claude Code 的首选用户入口采用 slash skill/command `/xk-query`；底层仍复用本地 CLI 的 query 实现。
+- 面向 Claude Code 的首选用户入口采用 slash command `/xk-query`；底层仍复用本地 CLI 的 query 实现。
 - 输出中必须同时包含答案、命中的 wiki 页面标识，以及回到 Raw 的引用链。
 - MVP 不实现向量检索、自动知识沉淀或复杂重排序；优先使用基于 index 与 link 的确定性检索路径为模型缩小上下文。
 
@@ -76,7 +76,7 @@
 - 检查重点是引用一致性：页面中的关键陈述是否能被 Raw 支持，以及表述强度是否超过 Raw 证据。
 - check 的 finding 生成由大模型在预设提示词引导下完成，工程层只负责装配页面、Raw 证据和规则上下文并校验输出结构。
 - 输出为报告或问题列表，至少区分“无来源陈述”和“过强结论”两类问题。
-- 面向 Claude Code 的首选用户入口采用 slash skill/command `/xk-check`；底层仍复用本地 CLI 的 check 实现。
+- 面向 Claude Code 的首选用户入口采用 slash command `/xk-check`；底层仍复用本地 CLI 的 check 实现。
 - MVP 不实现完整 lint、自动矛盾网络、自动修复、多页一致性巡检。
 
 **Independent Test**: 准备一篇包含正确引用、缺失引用和过强措辞的 wiki 页面，执行 check 后可看到对应问题被识别。
@@ -111,7 +111,7 @@
 - **FR-010**: check MUST 识别并报告“无来源陈述”和“过强结论”。
 - **FR-011**: MVP MUST NOT 实现完整 lint、自动矛盾网络、向量检索、多用户协作、Web UI 或复杂版本治理。
 - **FR-012**: 系统 SHOULD 支持最小页面关系集合：`related`、`depends_on`、`superseded_by`。
-- **FR-013**: 系统 SHOULD 优先通过 Claude Code slash skill/command 暴露 `/xk-ingest`、`/xk-query`、`/xk-check` 作为首选用户入口。
+- **FR-013**: 系统 SHOULD 优先通过 Claude Code slash command 暴露 `/xk-ingest`、`/xk-query`、`/xk-check` 作为首选用户入口。
 - **FR-014**: 上述 Claude Code 入口 MUST 复用 `XK-Knowledge` 本地 CLI 作为底层执行层，以最小改造保持可移植性；本轮实现 MUST NOT 以 MCP 作为前置条件。
 - **FR-015**: ingest MUST 经由 Claude Code 风格的 AI Proxy 和预设提示词执行，Raw chunk 划分、知识提炼、类型判定、章节组织、关系建议与 `wiki/index/link/log` 草稿生成 MUST 由 LLM 主导完成。
 - **FR-016**: 工程层 MUST 只承担必要约束：输入批准校验、模型上下文装配、结构化输出校验、原子提交与失败回滚；工程层 MUST NOT 用固定规则替代 LLM 的核心知识判断。

@@ -103,7 +103,7 @@
 - [ ] T028 [Polish] 对照 `specs/20260509-claude-knowledge-mvp/quickstart.md` 手动验证一次完整演示流程，并修正文档中的实际命令或路径偏差
 - [ ] T029 [Polish] 清理 `XK-Knowledge/src/claude_knowledge_mvp/` 中不再需要的启发式占位逻辑，确保未引入 plan 之外的额外能力
 - [ ] T030 [Polish] 运行最小回归检查，确认 AI Proxy 驱动的 ingest 原子提交、query 引用链与单页 check 三条主路径均可工作
-- [x] T031 [Polish] 在 Claude Code 配置最小入口层，新增 `/xk-ingest`、`/xk-query`、`/xk-check` slash skill/command，并保持底层复用 `XK-Knowledge` 本地 CLI
+- [x] T031 [Polish] 在 Claude Code 配置最小命令入口层，新增 `/xk-ingest`、`/xk-query`、`/xk-check` slash command，并保持底层复用 `XK-Knowledge` 本地 CLI
 - [x] T032 [Polish] 为 Claude Code 入口层补充最小 wrapper/参数转发实现，避免向用户暴露 `PYTHONPATH`、绝对路径拼接或 MCP 前置配置
 - [ ] T039 [Polish] 为 `XK-Knowledge/src/claude_knowledge_mvp/prompts/` 下的 Prompt Pack 增加版本标识与最小回归校验，确保运行时加载的是正式 prompt 而非占位内容
 

@@ -31,20 +31,20 @@ def sample_mutation_set() -> dict:
                 "chunk_id": "chunk-1",
                 "raw_id": "raw-1",
                 "locator": "L1-L3",
-                "text": "Claude Code skills can orchestrate ingest safely.",
+                "text": "Claude Code commands can orchestrate ingest safely.",
                 "order": 1,
             }
         ],
         "wiki_page_draft": {
             "page_id": "page-1",
-            "slug": "claude-code-skills-ingest",
-            "title": "Claude Code Skills Ingest",
+            "slug": "claude-code-command-ingest",
+            "title": "Claude Code Command Ingest",
             "wiki_type": "architecture",
-            "summary": "How skills-first ingest works.",
+            "summary": "How command-driven ingest works.",
             "body_sections": [
                 {
                     "heading": "Key Points",
-                    "content": "- Skills orchestrate ingest.\n- Helper commits atomically.",
+                    "content": "- Commands orchestrate ingest.\n- Helper commits atomically.",
                 }
             ],
             "source_chunk_ids": ["chunk-1"],
@@ -55,7 +55,7 @@ def sample_mutation_set() -> dict:
                 {
                     "scope": "global",
                     "type_name": "architecture",
-                    "topic": "skills-first ingest",
+                    "topic": "command-driven ingest",
                     "aliases": ["xk-ingest"],
                     "page_id": "page-1",
                     "rank": 1,

@@ -1,7 +1,7 @@
-# Data Model — Claude Code Skills 驱动的知识管理系统 MVP
+# Data Model — Claude Code 命令驱动的知识管理系统 MVP
 
 ## 1. RawDocument
-- **Purpose**: 表示一份经过人工筛选、允许被 `xk-ingest` 摄入的原始资料。
+- **Purpose**: 表示一份经过人工筛选、允许被 `/xk-ingest` 摄入的原始资料。
 - **Fields**:
   - `raw_id`
   - `source_path`
@@ -26,7 +26,7 @@
   - `text` 不能为空
 
 ## 3. SkillRuntimeContext
-- **Purpose**: `xk-ingest` skill 在调用 Agent 前组装的完整上下文包，用于约束知识组织方向、命名一致性与现有知识图谱对齐。
+- **Purpose**: 当前实现沿用 `SkillRuntimeContext` 这一内部命名，表示 `/xk-ingest` runtime 在调用 Agent 前组装的完整上下文包，用于约束知识组织方向、命名一致性与现有知识图谱对齐。
 - **Fields**:
   - `raw_document`
   - `constitution_text`
@@ -115,7 +115,7 @@
   - 必须能回溯到一次实际提交
 
 ## 10. HelperCommitResult
-- **Purpose**: helper 返回给 skill 的结构化提交结果。
+- **Purpose**: helper 返回给 `/xk-ingest` command/runtime 的结构化提交结果。
 - **Fields**:
   - `status`
   - `written_paths`
@@ -126,14 +126,14 @@
   - 失败时必须明确是否已回滚
 
 ## 11. QueryAnswerDraft
-- **Purpose**: 后续 `xk-query` 的结构化答案草稿。
+- **Purpose**: 后续 `/xk-query` 的结构化答案草稿。
 - **Fields**:
   - `answer`
   - `page_refs`
   - `citations`
 
 ## 12. CheckFinding
-- **Purpose**: 后续 `xk-check` 产生的单页问题。
+- **Purpose**: 后续 `/xk-check` 产生的单页问题。
 - **Fields**:
   - `finding_id`
   - `page_id`
@@ -156,4 +156,4 @@
 ## Transaction Invariants
 - 只有在 `wiki_page_draft`、`index_draft`、`link_draft`、`log_draft` 同时合法时，helper 才允许进入提交。
 - 任一目标文件写入失败时，helper 必须整体回滚，不得留下部分可见状态。
-- `xk-query` 与 `xk-check` 未来只读取已提交完成的知识库状态，不读取 staging 中间态。
+- `/xk-query` 与 `/xk-check` 未来只读取已提交完成的知识库状态，不读取 staging 中间态。
