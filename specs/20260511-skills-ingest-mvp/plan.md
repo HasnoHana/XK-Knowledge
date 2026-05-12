@@ -4,18 +4,25 @@ description: "Implementation plan for Claude Code skills-first knowledge MVP"
 
 # Implementation Plan: Claude Code Skills 驱动的知识管理系统 MVP
 
-**Feature**: `20260511-skills-ingest-mvp` | **Date**: 2026-05-11 | **Spec**: `/Users/bytedance/Desktop/Dev/specs/20260511-skills-ingest-mvp/spec.md`
+**Feature**: `20260511-skills-ingest-mvp` | **Date**: 2026-05-11 | **Spec**: `/Users/bytedance/Desktop/XK-Knowledge/specs/20260511-skills-ingest-mvp/spec.md`
 **Input**: Feature specification from `/specs/20260511-skills-ingest-mvp/spec.md`
 
 ## Summary
 
-保持 `Raw -> Ingest -> Query -> Check` 的产品蓝图不变，但架构从 CLI-first 重写为 Claude Code 原生 skills-first。`/xk-ingest` 成为当前 MVP 的主产品入口：skill 负责上下文收集、Prompt Pack 注入、AI Agent 调用、结果解释与提交控制；thin helper 仅负责 schema 校验、目标路径物化、原子提交与失败回滚。`xk-query` 与 `xk-check` 继续保留在产品蓝图和后续计划中，但本轮实现范围只覆盖 ingest。
+保持 `Raw -> Ingest -> Query -> Check` 的产品蓝图不变，但架构从 CLI-first 重写为 Claude Code 原生 skills-first。`/xk-ingest` 成为当前 MVP 的主产品入口：skill 负责上下文收集、Prompt Pack 注入、AI Agent 调用、结果解释与提交控制；thin helper 仅负责 schema 校验、目标路径物化、原子提交与失败回滚。当前 ingest 的产品目标不是把 Raw 压缩成摘要页，而是在 Raw 证据约束下生成一个可供后续 query/check 消费的知识页：Agent 负责重组、归纳、规范化命名与结构化组织，`xk-query` 与 `xk-check` 继续保留在产品蓝图和后续计划中，但本轮实现范围只覆盖 ingest。
+
+## Implementation Status
+
+- **[已实现]** `/xk-ingest` 作为当前唯一 MVP 产品入口
+- **[已实现]** skill 上下文装配、统一 mutation set 校验、page/index/link/log 原子提交与失败回滚
+- **[已实现]** 产品定义已切换为“知识页优先”，不再把 WIKI 视为 Raw 摘要页
+- **[规划中]** `xk-query` 与 `xk-check` 仍保留在产品蓝图中，当前不进入实现范围
 
 ## Technical Context
 
 **Language/Version**: Markdown spec + Claude Code skill runtime；helper 使用 Python 3.11  
 **Primary Dependencies**: Claude Code skills、Prompt Pack、Pydantic v2、PyYAML、pytest  
-**Storage**: 本地 Markdown 文件系统：`XK-Knowledge/RAW/`、`WIKI/`、`LOG/`、`.system/`  
+**Storage**: 本地 Markdown 文件系统；仓库根目录本身就是知识库根：`RAW/`、`WIKI/`、`LOG/`、`.system/`  
 **Testing**: skill walkthrough、helper 单元测试、原子提交/回滚验证、结构化输出校验  
 **Target Platform**: 本地 Claude Code 风格环境（当前通过 `ttadk code` + custom model 运行）  
 **Project Type**: 单项目技能工作流 + 本地 helper  
@@ -32,6 +39,7 @@ description: "Implementation plan for Claude Code skills-first knowledge MVP"
 - **PASS**: page、`INDEX.md`、`LINK.md`、`LOG/<date>.md` 必须单次原子提交；任一写入失败必须整体回滚。
 - **PASS**: MVP 仍限定在本地知识库与 skills 工作流，不扩展 lint、矛盾网络、向量检索、多用户、Web UI、复杂版本治理。
 - **PASS**: 核心知识工作由 Agent 在 prompt 约束下完成；helper 只承担机械性兜底，不得回退为规则驱动流水线。
+- **PASS**: ingest 产物必须是知识页而不是摘要页；页面组织应服务于知识消费与后续 query/check，而不是按 Raw 原文顺序做压缩复述。
 - **PASS**: prompt 资产本身属于正式交付物，必须与 skill 行为和 helper 校验契约一起版本化。
 - **Post-Phase 1 Re-check**: `research.md`、`data-model.md`、`quickstart.md` 与 `contracts/` 均遵守上述边界，无需额外豁免。
 
@@ -57,26 +65,25 @@ skills/
 └── xk-ingest/
     └── SKILL.md
 
-XK-Knowledge/
-├── CONSTITUTION.md
-├── RAW/
-├── WIKI/
-├── LOG/
-├── .system/
-└── src/claude_knowledge_mvp/
-    ├── prompts/
-    │   └── ingest.md
-    ├── domain/
-    ├── adapters/
-    └── helpers/
-        └── ingest_commit_helper.py
+CONSTITUTION.md
+RAW/
+WIKI/
+LOG/
+.system/
+src/claude_knowledge_mvp/
+├── prompts/
+│   └── ingest.md
+├── domain/
+├── adapters/
+└── helpers/
+    └── ingest_commit_helper.py
 
 tests/
 ├── integration/
 └── unit/
 ```
 
-**Structure Decision**: 产品入口收敛到 `skills/xk-ingest/SKILL.md`；Prompt Pack 与本地知识库仍放在 `XK-Knowledge/` 体系内；helper 作为 skill 的内部提交组件存在于 `XK-Knowledge/src/claude_knowledge_mvp/helpers/`，不再以 `cli.py` / `commands/*.py` 作为主骨架。
+**Structure Decision**: 产品入口收敛到 `skills/xk-ingest/SKILL.md`；仓库根目录本身就是知识库根，因此 Prompt Pack 位于 `src/claude_knowledge_mvp/prompts/`，知识内容位于 `RAW/`、`WIKI/`、`LOG/` 与 `.system/`，helper 作为 skill 的内部提交组件存在于 `src/claude_knowledge_mvp/helpers/`，不再以 `cli.py` / `commands/*.py` 作为主骨架。该结构的目标不是落一篇摘要页，而是让 Agent 把 Raw 组织成稳定的知识节点与页面结构，再由 helper 以事务方式提交。
 
 ## Complexity Tracking
 

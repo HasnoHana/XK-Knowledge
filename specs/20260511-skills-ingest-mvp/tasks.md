@@ -17,8 +17,8 @@
 **Purpose**: 建立 skills-first MVP 的最小入口与文档骨架
 
 - [x] T001 [Setup] 创建或整理 `skills/xk-ingest/SKILL.md` 的最小骨架，明确 `/xk-ingest` 是当前唯一 MVP 产品入口
-- [x] T002 [P] [Setup] 整理 `XK-Knowledge/src/claude_knowledge_mvp/prompts/ingest.md` 的正式 Prompt Pack 位置与加载约定
-- [x] T003 [P] [Setup] 在 `XK-Knowledge/src/claude_knowledge_mvp/helpers/` 下创建 `ingest_commit_helper.py` 占位文件，收口 helper 边界
+- [x] T002 [P] [Setup] 整理 `src/claude_knowledge_mvp/prompts/ingest.md` 的正式 Prompt Pack 位置与加载约定
+- [x] T003 [P] [Setup] 在 `src/claude_knowledge_mvp/helpers/` 下创建 `ingest_commit_helper.py` 占位文件，收口 helper 边界
 
 ---
 
@@ -29,10 +29,10 @@
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
 - [x] T004 [Foundation] 在 `skills/xk-ingest/SKILL.md` 中定义 skill 执行流：输入读取、上下文收集、Prompt 注入、Agent 调用、提交控制、结果反馈
-- [x] T005 [P] [Foundation] 在 `XK-Knowledge/src/claude_knowledge_mvp/domain/` 中整理 `RawDocument`、`SkillRuntimeContext`、`KnowledgeMutationSet`、`HelperCommitResult` 的结构契约与引用规则
-- [x] T006 [P] [Foundation] 在 `XK-Knowledge/src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中实现 helper 输入契约加载与基础校验入口，对齐 `specs/20260511-skills-ingest-mvp/contracts/xk-ingest-helper.contract.yaml`
-- [x] T007 [Foundation] 在 `skills/xk-ingest/SKILL.md` 与 `XK-Knowledge/CONSTITUTION.md` / `WIKI/<type>/LAWS.md` 之间建立固定读取约定，确保 skill 调用前能装配完整上下文
-- [x] T008 [Foundation] 在 `XK-Knowledge/src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中实现 staging、原子提交与失败回滚骨架，保证 page / index / link / log 不暴露部分成功状态
+- [x] T005 [P] [Foundation] 在 `src/claude_knowledge_mvp/domain/` 中整理 `RawDocument`、`SkillRuntimeContext`、`KnowledgeMutationSet`、`HelperCommitResult` 的结构契约与引用规则
+- [x] T006 [P] [Foundation] 在 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中实现 helper 输入契约加载与基础校验入口，对齐 `specs/20260511-skills-ingest-mvp/contracts/xk-ingest-helper.contract.yaml`
+- [x] T007 [Foundation] 在 `skills/xk-ingest/SKILL.md` 与仓库根目录下的 `CONSTITUTION.md` / `WIKI/<type>/LAWS.md` 之间建立固定读取约定，确保 skill 调用前能装配完整上下文
+- [x] T008 [Foundation] 在 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中实现 staging、原子提交与失败回滚骨架，保证 page / index / link / log 不暴露部分成功状态
 
 **Checkpoint**: Foundation ready - ingest user story can now begin
 
@@ -40,19 +40,19 @@
 
 ## Phase 3: User Story 1 - 通过 xk-ingest skill 将 Raw 落库为知识页 (Priority: P1) 🎯 MVP
 
-**Goal**: 通过 Claude Code 原生 `/xk-ingest` skill 完成单份 Raw 的知识提炼、统一 mutation set 生成与原子落库
+**Goal**: 通过 Claude Code 原生 `/xk-ingest` skill 完成单份 Raw 的知识组织、统一 mutation set 生成与原子落库，使产物成为可供后续 query/check 消费的知识页
 
-**Independent Test**: 在 `XK-Knowledge/RAW/` 中准备一份已人工筛选的真实 Raw，通过 `/xk-ingest` 执行一次摄入；成功时同时生成 wiki 页面并更新 `INDEX.md`、`LINK.md`、`LOG/<date>.md`；若引用缺失、mutation set 不完整或落盘失败，则整体失败且无部分结果
+**Independent Test**: 在仓库根目录下的 `RAW/` 中准备一份已人工筛选的真实 Raw，通过 `/xk-ingest` 执行一次摄入；成功时同时生成 wiki 页面并更新 `INDEX.md`、`LINK.md`、`LOG/<date>.md`，且页面应体现按知识结构组织的内容重组，而不是沿 Raw 原文顺序压缩出的摘要页；若引用缺失、mutation set 不完整或落盘失败，则整体失败且无部分结果
 
 - [x] T009 [US1] 在 `skills/xk-ingest/SKILL.md` 中实现 Raw 输入解析与准入检查，阻止未批准或不可读的 Raw 进入 ingest
-- [x] T010 [US1] 在 `skills/xk-ingest/SKILL.md` 中实现 skill runtime context 组装：读取 Raw、`XK-Knowledge/CONSTITUTION.md`、候选 `WIKI/<type>/LAWS.md`、全局 `INDEX.md` / `LINK.md` 摘要与 ingest prompt
-- [x] T011 [US1] 在 `skills/xk-ingest/SKILL.md` 中实现 Agent 调用路径，要求模型返回包含 `raw_chunks`、`wiki_page_draft`、`index_draft`、`link_draft`、`log_draft`、`completeness_report` 的统一 `KnowledgeMutationSet`
-- [x] T012 [US1] 在 `XK-Knowledge/src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中实现 schema 校验：拒绝缺少关键草稿、缺少合法 Raw 引用或 `completeness_report` 为空的输出
-- [x] T013 [P] [US1] 在 `XK-Knowledge/src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中实现目标路径物化逻辑，解析 wiki 页面、`WIKI/INDEX.md`、`WIKI/LINK.md`、`LOG/<date>.md` 的写入位置
-- [x] T014 [US1] 在 `XK-Knowledge/src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中完成 page / index / link / log 的单次原子提交与回滚处理
+- [x] T010 [US1] 在 `skills/xk-ingest/SKILL.md` 中实现 skill runtime context 组装：读取 Raw、仓库根目录下的 `CONSTITUTION.md`、候选 `WIKI/<type>/LAWS.md`、全局 `INDEX.md` / `LINK.md` 知识上下文与 ingest prompt
+- [x] T011 [US1] 在 `skills/xk-ingest/SKILL.md` 中实现 Agent 调用路径，要求模型返回包含 `raw_chunks`、`wiki_page_draft`、`index_draft`、`link_draft`、`log_draft`、`completeness_report` 的统一 `KnowledgeMutationSet`，并在 Raw 证据约束下完成知识重组与页面组织，而不是按原文顺序压缩摘要
+- [x] T012 [US1] 在 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中实现 schema 校验：拒绝缺少关键草稿、缺少合法 Raw 引用、`completeness_report` 为空，或虽然结构完整但本质上只是压缩摘要而未形成知识页的输出
+- [x] T013 [P] [US1] 在 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中实现目标路径物化逻辑，解析 wiki 页面、`WIKI/INDEX.md`、`WIKI/LINK.md`、`LOG/<date>.md` 的写入位置
+- [x] T014 [US1] 在 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中完成 page / index / link / log 的单次原子提交与回滚处理
 - [x] T015 [US1] 在 `skills/xk-ingest/SKILL.md` 中接入 helper 提交结果，向用户输出知识摄入摘要而不是底层路径或 helper 内部细节
-- [x] T016 [US1] 在 `skills/xk-ingest/SKILL.md` 与 `XK-Knowledge/src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中补全失败路径：Raw 不合法、Agent 输出漂移、引用非法、目标路径不可物化、任一写入失败时的拒绝与回滚
-- [x] T017 [US1] 按 `specs/20260511-skills-ingest-mvp/quickstart.md` 手动跑通一次真实 ingest 演示，并记录需要修正的 skill 文案、Prompt 约束或 helper 提交细节
+- [x] T016 [US1] 在 `skills/xk-ingest/SKILL.md` 与 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中补全失败路径：Raw 不合法、Agent 输出漂移、引用非法、目标路径不可物化、任一写入失败时的拒绝与回滚
+- [x] T017 [US1] 按 `specs/20260511-skills-ingest-mvp/quickstart.md` 手动跑通一次真实 ingest 演示，并记录需要修正的 skill 文案、Prompt 约束、知识页组织质量或 helper 提交细节
 
 **Checkpoint**: User Story 1 完成后，skills-first MVP 应可独立演示
 
@@ -90,7 +90,7 @@
 
 **Purpose**: 收敛 MVP 文档、回归与后续扩展边界，不扩展新能力
 
-- [ ] T024 [Polish] 对齐 `specs/20260511-skills-ingest-mvp/spec.md`、`plan.md`、`quickstart.md` 与实际 `/xk-ingest` 行为，修正文档偏差
+- [ ] T024 [Polish] 对齐 `specs/20260511-skills-ingest-mvp/spec.md`、`plan.md`、`quickstart.md` 与实际 `/xk-ingest` 行为，确保 WIKI 始终被定义为知识页而不是 Raw 摘要，并修正文档偏差
 - [ ] T025 [Polish] 清理旧的 CLI-first 表述或入口依赖，确保当前设计不再以 `cli.py` / `commands/*.py` 作为产品主接口
 - [ ] T026 [Polish] 复核 `specs/20260511-skills-ingest-mvp/contracts/xk-ingest-helper.contract.yaml` 与 helper 实现的一致性，避免 skill/helper 契约漂移
 - [ ] T027 [Polish] 明确记录 `xk-query` 与 `xk-check` 的后续扩展边界，确保本轮不误扩 scope
@@ -130,8 +130,8 @@
 
 ```bash
 Task: "在 skills/xk-ingest/SKILL.md 中实现 skill runtime context 组装"
-Task: "在 XK-Knowledge/src/claude_knowledge_mvp/helpers/ingest_commit_helper.py 中实现 schema 校验入口"
-Task: "在 XK-Knowledge/src/claude_knowledge_mvp/helpers/ingest_commit_helper.py 中实现目标路径物化逻辑"
+Task: "在 src/claude_knowledge_mvp/helpers/ingest_commit_helper.py 中实现 schema 校验入口"
+Task: "在 src/claude_knowledge_mvp/helpers/ingest_commit_helper.py 中实现目标路径物化逻辑"
 ```
 
 ---

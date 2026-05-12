@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "xk-ingest/prepare-output-schema/v1",
+  "title": "xk-ingest prepare output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_name",
+    "schema_version",
+    "raw_document",
+    "constitution_text",
+    "candidate_laws",
+    "global_index_excerpt",
+    "global_link_excerpt",
+    "prompt_pack",
+    "expected_output_keys"
+  ],
+  "properties": {
+    "schema_name": {
+      "type": "string",
+      "const": "xk-ingest-prepare-output"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "raw_document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_id", "source_path", "title", "content"],
+      "properties": {
+        "raw_id": {"type": "string"},
+        "source_path": {"type": "string"},
+        "title": {"type": "string"},
+        "content": {"type": "string"}
+      }
+    },
+    "constitution_text": {
+      "type": "string"
+    },
+    "candidate_laws": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "global_index_excerpt": {
+      "type": "string"
+    },
+    "global_link_excerpt": {
+      "type": "string"
+    },
+    "prompt_pack": {
+      "type": "string"
+    },
+    "expected_output_keys": {
+      "type": "array",
+      "items": {"type": "string"},
+      "prefixItems": [
+        {"const": "raw_chunks"},
+        {"const": "wiki_page_draft"},
+        {"const": "index_draft"},
+        {"const": "link_draft"},
+        {"const": "log_draft"},
+        {"const": "completeness_report"}
+      ],
+      "minItems": 6,
+      "maxItems": 6
+    }
+  }
+}

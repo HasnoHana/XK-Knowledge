@@ -27,7 +27,14 @@
   - 分文件多轮生成：语义漂移与事务一致性风险更高。
   - 只生成 page draft，再由工程补索引/日志：回退成工程主导。
 
-## Decision 5: 本轮只交付 ingest，但保留 query/check 蓝图
+## Decision 5: WIKI 是知识组织产物，不是 Raw 摘要产物
+- **Decision**: `wiki_page_draft` 的目标是生成一个适合知识消费的知识页，而不是把 Raw 压缩成一篇高质量摘要。Agent 必须在 Raw 证据约束下，对分散内容做重组、归纳、规范化命名与结构化组织。
+- **Rationale**: 后续 `xk-query` 与 `xk-check` 依赖的是稳定的知识结构，而不是按原文顺序压缩出来的复述页。若 ingest 产物只是摘要，知识库很难形成可复用的知识节点与关系。
+- **Alternatives considered**:
+  - 摘要优先：更容易快速出页，但会把 WIKI 退化成 Raw 的缩写展示层。
+  - 完全自由生成：容易失控并引入 Raw 之外的知识，不利于证据约束。
+
+## Decision 6: 本轮只交付 ingest，但保留 query/check 蓝图
 - **Decision**: 当前实现与验证只覆盖 `xk-ingest`；`xk-query` 与 `xk-check` 保留在产品蓝图、数据模型和契约命名中，待后续阶段扩展。
 - **Rationale**: 先证明 skills-first ingest 能稳定跑通，能最大化降低重写范围并快速验证方向。
 - **Alternatives considered**:
@@ -36,7 +43,7 @@
 ## Resolved Technical Context
 - **Skill Runtime**: Claude Code 原生 skills，当前通过 `ttadk code` 启动并使用 custom model
 - **Helper Runtime**: Python 3.11
-- **Storage**: `XK-Knowledge/RAW/`、`WIKI/`、`LOG/` 与 `.system/`
-- **Prompt Assets**: `XK-Knowledge/src/claude_knowledge_mvp/prompts/ingest.md`
+- **Storage**: 仓库根目录本身就是知识库根：`RAW/`、`WIKI/`、`LOG/` 与 `.system/`
+- **Prompt Assets**: `src/claude_knowledge_mvp/prompts/ingest.md`
 - **Testing Focus**: skill walkthrough、结构化输出校验、原子提交失败回滚、真实 Raw 演示闭环
 - **Scope**: 单用户本地知识库、10-50 份 Raw、最多约 500 篇 wiki 页面

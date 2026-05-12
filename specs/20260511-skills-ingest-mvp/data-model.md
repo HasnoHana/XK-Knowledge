@@ -10,11 +10,11 @@
   - `ingest_allowed`
   - `content`
 - **Validation Rules**:
-  - `source_path` 必须存在且可读
+  - `source_path` 必须位于仓库根目录下的 `RAW/` 内，且文件存在并可读
   - `ingest_allowed=true` 才允许进入 ingest
 
 ## 2. RawChunk
-- **Purpose**: 由 AI Agent 在 ingest prompt 引导下划定的稳定证据单元。
+- **Purpose**: 由 AI Agent 在 ingest prompt 引导下划定的稳定证据单元，供后续知识重组、章节归并与引用追踪使用。
 - **Fields**:
   - `chunk_id`
   - `raw_id`
@@ -26,7 +26,7 @@
   - `text` 不能为空
 
 ## 3. SkillRuntimeContext
-- **Purpose**: `xk-ingest` skill 在调用 Agent 前组装的完整上下文包。
+- **Purpose**: `xk-ingest` skill 在调用 Agent 前组装的完整上下文包，用于约束知识组织方向、命名一致性与现有知识图谱对齐。
 - **Fields**:
   - `raw_document`
   - `constitution_text`
@@ -35,10 +35,10 @@
   - `global_link_excerpt`
   - `prompt_pack`
 - **Validation Rules**:
-  - 缺少 Raw、Constitution 或 Prompt Pack 时不得进入 Agent 调用
+  - 缺少 Raw、仓库根目录下的 `CONSTITUTION.md` 或 Prompt Pack 时不得进入 Agent 调用
 
 ## 4. PromptPack
-- **Purpose**: 定义 ingest 执行路径、输出 schema 与失败条件的正式提示词资产。
+- **Purpose**: 定义 ingest 的正式提示词资产，明确 Agent 应把 Raw 组织成知识页而不是摘要页，并声明输出契约与失败边界。
 - **Fields**:
   - `name`
   - `path`
@@ -46,10 +46,11 @@
   - `output_contract`
 - **Validation Rules**:
   - 必须显式要求加载 Constitution
+  - 必须显式要求 Wiki Page 以知识组织而不是原文压缩为目标
   - ingest 必须声明 KnowledgeMutationSet 输出格式
 
 ## 5. KnowledgeMutationSet
-- **Purpose**: AI Agent 一次性生成的统一知识变更集合。
+- **Purpose**: AI Agent 一次性生成的统一知识变更集合，用于把 Raw 支持的内容重组为知识页并同步产出索引、关系与日志草稿。
 - **Fields**:
   - `raw_chunks`
   - `wiki_page_draft`
@@ -60,9 +61,10 @@
 - **Validation Rules**:
   - 任一关键组成缺失时 helper 必须拒绝提交
   - `completeness_report` 不能为空
+  - `wiki_page_draft` 必须体现知识组织结果，而不是仅对 Raw 做压缩摘要
 
 ## 6. WikiPage
-- **Purpose**: 从 mutation set 物化出来的正式知识页面。
+- **Purpose**: 从 mutation set 物化出来的正式知识页面；它不是 Raw 的压缩摘要，而是 Agent 基于证据完成重组、归纳与结构化组织后的知识产物。
 - **Fields**:
   - `page_id`
   - `slug`
@@ -75,6 +77,7 @@
 - **Validation Rules**:
   - `source_chunk_ids` 至少包含一条有效 Raw 引用
   - 页面内容必须源自 Agent 草稿而非 helper 模板补齐
+  - `body_sections` 应体现知识结构组织，而不是仅按 Raw 原始顺序压缩复述
 
 ## 7. IndexEntry
 - **Purpose**: `INDEX.md` 中的主题索引项。
