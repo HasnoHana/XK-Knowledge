@@ -46,15 +46,19 @@
 
 - [x] T009 [US1] 在 command/runtime 中实现 Raw 输入解析与准入检查，阻止未批准或不可读的 Raw 进入 ingest
 - [x] T010 [US1] 在 direct ingest runtime 中实现 runtime context 组装：读取 Raw、仓库根目录下的 `CONSTITUTION.md`、候选 `WIKI/<type>/LAWS.md`、全局 `INDEX.md` / `LINK.md` 知识上下文与 ingest prompt
-- [x] T011 [US1] 在 direct ingest runtime 中实现 Agent 调用路径，要求模型返回包含 `raw_chunks`、`wiki_page_draft`、`index_draft`、`link_draft`、`log_draft`、`completeness_report` 的统一 `KnowledgeMutationSet`，并在 Raw 证据约束下完成知识重组与页面组织，而不是按原文顺序压缩摘要
-- [x] T012 [US1] 在 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中实现 schema 校验：拒绝缺少关键草稿、缺少合法 Raw 引用、`completeness_report` 为空，或虽然结构完整但本质上只是压缩摘要而未形成知识页的输出
+- [x] T011 [US1] 在 direct ingest 主路径中接通“当前 Claude 会话生成 mutation → local runtime 消费 mutation”的桥接链路，确保 `/xk-ingest` 在不依赖手工 prepare/commit 的前提下可稳定拿到统一 `KnowledgeMutationSet`
+- [x] T012 [US1] 在 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中实现基础 schema 校验：拒绝缺少关键草稿、缺少合法 Raw 引用、`completeness_report` 为空等结构性非法输出
+- [x] T012A [US1] 在 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中补充更强的知识页质量与 graph 保守性校验，避免虽然结构完整但本质上只是压缩摘要、或对 `index/link` 做超出 RAW 证据的扩张性提交
 - [x] T013 [P] [US1] 在 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中实现目标路径物化逻辑，解析 wiki 页面、`WIKI/INDEX.md`、`WIKI/LINK.md`、`LOG/<date>.md` 的写入位置
 - [x] T014 [US1] 在 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中完成 page / index / link / log 的单次原子提交与回滚处理
 - [x] T015 [US1] 在 `.claude/commands/xk-ingest.md` 与 runtime 输出中接入 helper 提交结果，向用户输出知识摄入摘要而不是底层路径或 helper 内部细节
-- [x] T016 [US1] 在 runtime 与 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中补全失败路径：Raw 不合法、Agent 输出漂移、引用非法、目标路径不可物化、任一写入失败时的拒绝与回滚
-- [x] T017 [US1] 按 `specs/20260511-skills-ingest-mvp/quickstart.md` 手动跑通一次真实 ingest 演示，并记录需要修正的命令文案、Prompt 约束、知识页组织质量或 helper 提交细节
+- [x] T015A [US1] 在 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中把 `index_draft`、`link_draft`、`log_draft` 落实为增量 merge 语义，保留 `WIKI/INDEX.md`、`WIKI/LINK.md` 与同日 `LOG/<date>.md` 的既有有效内容，允许去重但禁止因单次 ingest 覆盖无关历史条目
+- [x] T015B [US1] 在 `tests/unit/test_ingest_commit_helper.py` 中补充连续 ingest 回归测试，验证历史 index/link 保留与同日日志追加，防止 helper 重新退化为整文件覆盖
+- [x] T015C [US1] 在 `spec.md`、`quickstart.md`、`.claude/commands/xk-ingest*.md` 与 runtime 约束中明确边界：项目依托当前 Claude 会话生成 mutation，runtime/helper 不主动调用 Claude，只负责本地 prepare / parse / validate / commit
+- [x] T016 [US1] 在 runtime 与 `src/claude_knowledge_mvp/helpers/ingest_commit_helper.py` 中补全失败路径：除 Raw 不合法、引用非法、目标路径不可物化、任一写入失败外，还要确保“会话层未提供 mutation”时返回结构化桥接错误，而不是直接抛 traceback
+- [x] T017 [US1] 按 `specs/20260511-skills-ingest-mvp/quickstart.md` 基于真实 `/xk-ingest` 主路径跑通一次 ingest 演示，并记录使用的 RAW、命令、结果摘要、写入路径和需修正文案/Prompt/提交细节
 
-**Checkpoint**: User Story 1 完成后，command-first MVP 应可独立演示
+**Checkpoint**: 只有当 T011、T012A、T016、T017 全部完成后，User Story 1 才可视为真正完成，command-first MVP 才能被视为可独立演示
 
 ---
 
@@ -90,10 +94,11 @@
 
 **Purpose**: 收敛 MVP 文档、回归与后续扩展边界，不扩展新能力
 
-- [ ] T024 [Polish] 对齐 `specs/20260511-skills-ingest-mvp/spec.md`、`plan.md`、`quickstart.md` 与实际 `/xk-ingest` 行为，确保 WIKI 始终被定义为知识页而不是 Raw 摘要，并修正文档偏差
+- [x] T024 [Polish] 对齐 `specs/20260511-skills-ingest-mvp/spec.md`、`plan.md`、`quickstart.md` 与实际 `/xk-ingest` 行为，确保 WIKI 始终被定义为知识页而不是 Raw 摘要，并修正文档偏差
+- [x] T024A [Polish] 对齐 `specs/20260511-skills-ingest-mvp/tasks.md` 与真实代码仓状态：移除“名义完成但验收未通过”的勾选漂移，确保后续实现和验收都基于可信任务状态推进
 - [x] T025 [Polish] 清理旧的外露 skill 依赖，确保当前设计不再以额外 skill 文件作为产品主接口
-- [ ] T026 [Polish] 复核 `specs/20260511-skills-ingest-mvp/contracts/xk-ingest-helper.contract.yaml` 与 helper 实现的一致性，避免 command/runtime 与 helper 契约漂移
-- [ ] T027 [Polish] 明确记录 `/xk-query` 与 `/xk-check` 的后续扩展边界，确保本轮不误扩 scope
+- [x] T026 [Polish] 复核 `specs/20260511-skills-ingest-mvp/contracts/xk-ingest-helper.contract.yaml` 与 helper 实现的一致性，避免 command/runtime 与 helper 契约漂移；本次已补充 merge-preserving 提交语义，明确 `global_index`、`global_link` 与同日 `log_entry` 必须保留历史有效内容并执行增量合并
+- [x] T027 [Polish] 明确记录 `/xk-query` 与 `/xk-check` 的后续扩展边界，确保本轮不误扩 scope
 
 ---
 
@@ -157,4 +162,6 @@ Task: "在 src/claude_knowledge_mvp/helpers/ingest_commit_helper.py 中实现目
 - 当前建议的**最小 MVP 范围就是 User Story 1**
 - 当前 tasks.md 明确保留 `/xk-query` / `/xk-check` 的蓝图位，但不把它们纳入本轮实现范围
 - helper 的职责被限制为 schema 校验、路径物化、原子提交与回滚，不得回退为知识判断层
+- 当前 codebase 中已经存在 `query.py`、`query.md`、`tests/unit/test_query_runtime.py` 等 query 侧探索性实现，但它们不计入本轮 ingest MVP 完成定义，除非后续显式切换当前 feature scope。
+- 本次 tasks 重校准后，凡是带 `[x]` 的任务应同时满足“代码已存在 + 与当前 spec 边界一致 + 能通过对应验收语义”，否则必须回退为未完成或拆分为更细粒度任务。
 - 若后续需要补独立自动化测试任务，可在不扩展产品范围的前提下单独追加

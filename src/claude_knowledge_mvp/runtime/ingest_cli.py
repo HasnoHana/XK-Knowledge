@@ -15,10 +15,12 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run")
     run_parser.add_argument("--repo-root", required=True)
     run_parser.add_argument("--raw-path", required=True)
+    run_parser.add_argument("--mutation-json")
 
     debug_run_parser = subparsers.add_parser("debug-run")
     debug_run_parser.add_argument("--repo-root", required=True)
     debug_run_parser.add_argument("--raw-path", required=True)
+    debug_run_parser.add_argument("--mutation-json")
 
     prepare_parser = subparsers.add_parser("prepare")
     prepare_parser.add_argument("--repo-root", required=True)
@@ -39,6 +41,7 @@ def main() -> None:
         result = execute_ingest(
             repo_root=Path(args.repo_root),
             raw_relative_path=args.raw_path,
+            mutation_json_path=Path(args.mutation_json) if args.mutation_json else None,
         )
         output = asdict(result) if is_dataclass(result) else result
         print(json.dumps(output, ensure_ascii=False, indent=2))
@@ -48,6 +51,7 @@ def main() -> None:
         output = execute_ingest_debug(
             repo_root=Path(args.repo_root),
             raw_relative_path=args.raw_path,
+            mutation_json_path=Path(args.mutation_json) if args.mutation_json else None,
         )
         print(json.dumps(output, ensure_ascii=False, indent=2))
         return

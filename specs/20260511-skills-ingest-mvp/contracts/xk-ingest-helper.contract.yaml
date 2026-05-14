@@ -3,7 +3,9 @@ name: xk-ingest-helper
 purpose: >-
   Defines the structured boundary between the Claude Code `/xk-ingest`
   command/runtime orchestrator and the thin helper responsible for validation
-  and atomic commit.
+  and atomic commit. The project relies on the active Claude session to produce
+  mutation content; the helper/runtime side is local-only and must not actively
+  invoke Claude on its own.
 
 input:
   type: object
@@ -69,7 +71,35 @@ commit_behavior:
     - global_index
     - global_link
     - log_entry
+  merge_policy:
+    global_index:
+      strategy: merge-preserving
+      preserve_existing_entries: true
+      allow_deduplication: true
+      treat_input_as_incremental: true
+    global_link:
+      strategy: merge-preserving
+      preserve_existing_entries: true
+      allow_deduplication: true
+      treat_input_as_incremental: true
+    log_entry:
+      strategy: append-or-merge-preserving
+      preserve_same_day_history: true
+      allow_deduplication: true
+      treat_input_as_incremental: true
   rollback_on_any_failure: true
+
+merge_semantics:
+  index_draft: incremental patch for `WIKI/INDEX.md`, not a whole-file snapshot
+  link_draft: incremental patch for `WIKI/LINK.md`, not a whole-file snapshot
+  log_draft: incremental patch for `LOG/<date>.md`, must preserve same-day history
+  session_boundary:
+    - mutation generation is performed by the active Claude session, not by the local helper/runtime
+    - helper/runtime must only consume already-produced mutation content and perform local validation/commit
+  non_goals:
+    - helper must not remove unrelated historical entries during a successful ingest
+    - helper must not rewrite same-day log file as a single-entry snapshot
+    - helper/runtime must not actively invoke Claude SDK, Claude CLI, or any internal secondary Claude call chain
 
 output:
   type: object

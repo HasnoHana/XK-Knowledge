@@ -30,7 +30,8 @@
 
 ## Notes
 
-- 输入评估结论：**Workable (7/10)**。本次输入最初是针对既有 spec 的定向修正，请求目标清晰、范围明确（先修正文档定义，不改实现代码），但未逐项指出需要落位的具体章节，因此由 AI 在现有工件结构上完成映射。
-- 完整性校验通过：用户新增要求“WIKI 不是 RAW 的精简摘要，而是 AI Agent ingest 后重组、归纳、组织过的知识页；先修改 spec，不改实现代码”已分别落位到 Input、Clarifications、User Story 1、Acceptance Scenarios、Edge Cases、Functional Requirements、Key Entities 与 Success Criteria。
-- 本次更新已把整套 spec 体系对齐到同一产品定义：Wiki Page 是知识页而不是压缩摘要，ingest 的目标是按知识结构重组 Raw 支持内容，并服务后续 query/check 消费。
-- 本次仍未引入实现代码变更；后续下一步应基于已对齐的 spec suite 继续修正 prompt 等执行资产，避免产品定义与运行时引导继续漂移。
+- 输入评估结论：**Workable (7/10)**。本次输入是对既有 ingest MVP spec 的定向修正，请求目标清晰、范围明确，未提供长文档但已明确指出需要修正的核心语义：`WIKI/INDEX.md`、`WIKI/LINK.md` 与同日 `LOG/<date>.md` 必须采用保留历史内容的 merge-preserving 更新，而不是整文件覆盖。
+- 完整性校验通过：用户新增要求“Update the current ingest MVP spec to explicitly require merge-preserving updates for WIKI/INDEX.md, WIKI/LINK.md, and same-day LOG files, instead of whole-file overwrite behavior.” 已分别落位到 User Story 1 的 Technical Implementation、Acceptance Scenarios、Edge Cases、Functional Requirements、Key Entities 与 Success Criteria。
+- 本次更新已把 spec 对 helper 提交语义写清：`index_draft`、`link_draft`、`log_draft` 是增量草稿，不是目标文件完整快照；重复项可去重，但无关历史项不得因一次 ingest 被删除。
+- 当前 checklist 复核结果：spec / quickstart / tasks / contract 已对齐到同一边界——项目依托当前 Claude 会话生成 mutation，runtime/helper 仅做本地 prepare / parse / validate / commit；merge-preserving 提交语义和最小知识页质量闸门也已落地。
+- 已完成的可验收闭环：会话桥接 -> local runtime `run` / `debug-run` -> 本地校验 -> 原子提交 -> 结构化失败返回。当前仍保留的后续空间主要在 query/check 蓝图，不阻塞 ingest MVP 验收。

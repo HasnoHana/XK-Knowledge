@@ -15,7 +15,10 @@ description: "Implementation plan for Claude Code command-driven knowledge MVP"
 
 - **[已实现]** `/xk-ingest` 作为当前唯一 MVP 产品入口
 - **[已实现]** 命令上下文装配、统一 mutation set 校验、page/index/link/log 原子提交与失败回滚
-- **[已实现]** 产品定义已切换为“知识页优先”，不再把 WIKI 视为 Raw 摘要页
+- **[已实现]** merge-preserving 的 `INDEX.md` / `LINK.md` / 同日 `LOG/<date>.md` 提交语义与对应回归测试
+- **[已实现]** direct ingest 的会话桥接链路：当前 Claude 会话可生成 `KnowledgeMutationSet`，再交由 local runtime 的 `run` / `debug-run` 路径消费；runtime/helper 不主动调用 Claude
+- **[已实现]** bridge 缺失时返回结构化 `session_bridge_error`，不再直接抛 traceback
+- **[已实现]** 最小知识页质量与 graph 保守性闸门：拒绝“summary 等于标题”“单个 `Extracted Knowledge` 整文搬运节”“投机性 link 扩张”
 - **[规划中]** `/xk-query` 与 `/xk-check` 仍保留在产品蓝图中，当前不进入实现范围
 
 ## Technical Context

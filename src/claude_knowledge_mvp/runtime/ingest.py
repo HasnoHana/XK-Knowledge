@@ -95,10 +95,16 @@ def commit_ingest_artifacts(repo_root: Path, mutation_json_path: Path):
         )
 
 
-def execute_ingest(repo_root: Path, raw_relative_path: str, mutation_generator=None) -> HelperCommitResult:
+def execute_ingest(
+    repo_root: Path,
+    raw_relative_path: str,
+    mutation_json_path: Path | None = None,
+    mutation_generator=None,
+) -> HelperCommitResult:
     prepared = _prepare_and_validate_mutation(
         repo_root=repo_root,
         raw_relative_path=raw_relative_path,
+        mutation_json_path=mutation_json_path,
         mutation_generator=mutation_generator,
     )
     if isinstance(prepared, HelperCommitResult):
@@ -115,10 +121,16 @@ def execute_ingest(repo_root: Path, raw_relative_path: str, mutation_generator=N
         )
 
 
-def execute_ingest_debug(repo_root: Path, raw_relative_path: str, mutation_generator=None) -> dict:
+def execute_ingest_debug(
+    repo_root: Path,
+    raw_relative_path: str,
+    mutation_json_path: Path | None = None,
+    mutation_generator=None,
+) -> dict:
     prepared = _prepare_and_validate_mutation(
         repo_root=repo_root,
         raw_relative_path=raw_relative_path,
+        mutation_json_path=mutation_json_path,
         mutation_generator=mutation_generator,
     )
     if isinstance(prepared, HelperCommitResult):
@@ -218,6 +230,7 @@ def _prepare_and_validate_mutation(
     *,
     repo_root: Path,
     raw_relative_path: str,
+    mutation_json_path: Path | None = None,
     mutation_generator=None,
 ) -> dict | HelperCommitResult:
     try:
@@ -230,8 +243,27 @@ def _prepare_and_validate_mutation(
             retryable=False,
         )
 
-    generator = mutation_generator or generate_mutation_with_claude
-    raw_mutation = generator(prepare_payload)
+    if mutation_json_path is not None:
+        try:
+            raw_mutation = mutation_json_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            return _build_failed_commit_result(
+                error_code="session_bridge_error",
+                error_stage="read_mutation_json",
+                diagnostics=[str(exc)],
+                retryable=False,
+            )
+    else:
+        generator = mutation_generator or generate_mutation_with_claude
+        try:
+            raw_mutation = generator(prepare_payload)
+        except ValueError as exc:
+            return _build_failed_commit_result(
+                error_code="session_bridge_error",
+                error_stage="generate_mutation_with_claude",
+                diagnostics=[str(exc)],
+                retryable=False,
+            )
     mutation = _parse_model_output(raw_mutation)
     if isinstance(mutation, HelperCommitResult):
         return mutation
@@ -250,7 +282,9 @@ def _prepare_and_validate_mutation(
 def generate_mutation_with_claude(prepare_payload: dict) -> dict:
     mutation_json = os.environ.get("XK_INGEST_MUTATION_JSON")
     if not mutation_json:
-        raise ValueError("XK_INGEST_MUTATION_JSON is required for Claude-backed ingest")
+        raise ValueError(
+            "Claude session did not supply XK_INGEST_MUTATION_JSON for the local ingest runtime bridge"
+        )
     return json.loads(mutation_json)
 
 

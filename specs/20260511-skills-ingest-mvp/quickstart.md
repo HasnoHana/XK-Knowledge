@@ -29,12 +29,13 @@
 
 预期执行流：
 1. `.claude/commands/xk-ingest.md` 负责定义用户输入协议与结果输出约束
-2. direct ingest runtime 读取 Raw、Constitution、候选 Laws、现有 `INDEX.md` / `LINK.md` 知识上下文与 ingest prompt
-3. runtime 生成 `KnowledgeMutationSet`
-4. Agent 在 Raw 证据约束下把内容重组为适合知识消费的 Wiki Page，而不是按原文顺序压缩成摘要页
-5. thin helper 校验返回结构、引用合法性与完整性
-6. thin helper 原子写入 page / index / link / log
-7. 用户看到的是本次 ingest 的结果摘要或失败原因，而不是 helper 内部细节
+2. 当前 Claude / Claude Code 会话读取 Raw、Constitution、候选 Laws、现有 `INDEX.md` / `LINK.md` 知识上下文与 ingest prompt，并基于这些输入生成 `KnowledgeMutationSet`
+3. 会话层可通过临时 mutation JSON 文件或等价桥接方式，把该 `KnowledgeMutationSet` 交给 local runtime 的 `run` / `debug-run` 路径；这是内部桥接细节，不是用户手动工作流的一部分
+4. local runtime 只负责接收该 `KnowledgeMutationSet`，执行 parse / validate / commit 等本地步骤；runtime/helper 不主动调用 Claude
+5. Agent 在 Raw 证据约束下把内容重组为适合知识消费的 Wiki Page，而不是按原文顺序压缩成摘要页
+6. thin helper 校验返回结构、引用合法性与完整性
+7. thin helper 原子写入 page / index / link / log
+8. 用户看到的是本次 ingest 的结果摘要或失败原因，而不是 helper 内部细节
 
 ## 3. 成功结果验证
 执行成功后，应能看到：
@@ -58,11 +59,35 @@
 - `/xk-query` 与 `/xk-check` 仍保留在产品蓝图中，但本轮不实现
 - helper 只负责 schema 校验、路径物化、原子提交与回滚，不承担知识判断
 
-## 6. 调试说明
+## 6. 已验证演示记录
+
+### 演示输入
+- RAW: `RAW/article/PPO-core.md`
+- 会话层先生成一份 `KnowledgeMutationSet`，再通过 direct `run` 路径桥接给 local runtime
+
+### 本次演示使用的本地 runtime 命令
+```text
+PYTHONPATH="/Users/bytedance/Desktop/XK-Knowledge/src" python3 -m claude_knowledge_mvp.runtime.ingest_cli run --repo-root "/Users/bytedance/Desktop/XK-Knowledge" --raw-path "RAW/article/PPO-core.md" --mutation-json "<temporary-session-bridge-file>"
+```
+
+### 演示结果摘要
+- status: `committed`
+- written_paths:
+  - `WIKI/architecture/pages/PPO-core.md`
+  - `WIKI/INDEX.md`
+  - `WIKI/LINK.md`
+  - `LOG/2026-05-14.md`
+
+### 本次演示暴露出的后续改进点
+- direct ingest 的会话桥接链路已打通：当前 Claude 会话可生成 mutation，并由 local runtime 完成本地提交。
+- 缺失会话层 mutation 时，runtime 现已返回结构化 `session_bridge_error`，不再直接抛 traceback。
+- 当前 `PPO-core` 产出的 wiki 页面虽然成功提交，但组织质量仍偏弱：`Summary` 基本等于标题，正文仍接近整文搬运，说明后续仍需补“知识页质量 / graph 保守性”闸门。
+
+## 7. 调试说明
 `prepare` / `commit` CLI 仍可保留为内部调试接口，但不是用户主流程。
 用户不应被要求手动操作 `PYTHONPATH`、中间 `mutation.json` 或内部路径拼接。
 
-## 7. 最小验证建议
+## 8. 最小验证建议
 - 用一份真实 Raw 跑通一次成功 ingest
 - 人为构造一份缺引用或缺草稿的模型返回，验证 helper 拒绝提交
 - 人为构造一次落盘失败，验证回滚后 `WIKI/` 与 `LOG/` 不出现部分结果
