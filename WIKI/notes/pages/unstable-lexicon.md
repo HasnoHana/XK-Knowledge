@@ -1,0 +1,92 @@
+# 不稳定术语小词典
+
+> Summary: # 不稳定术语小词典
+
+## 核心术语
+# 不稳定术语小词典
+
+## 一、侧影名
+
+指某一异常知识对象尚未稳定之前，在旁证、误记、旧摘要或边缘材料中反复出现的替代名称。
+
+侧影名不是别名。别名依附于正名，侧影名则常常先于正名存在。对失名级对象而言，侧影名甚至是唯一允许保留的称呼。
+
+## 补录与失名状态
+## 二、背温
+
+指知识对象脱离源句后仍能维持自洽的程度。
+
+- **低温**：离开原段落即趋于失效
+- **温存**：跨条目引用后仍可保持主要特征
+- **灼返**：删除后仍会在其他位置回写
+
+背温不是热度，也不是传播度。一个无人知晓的对象，仍可能具有极高背温。
+
+## 三、静默区
+
+指不得与某条异常知识并列检索、并列抄录或并列讨论的词组集合。
+
+静默区的意义不在于保密，而在于避免解释关系短路。馆内曾出现将“门后天光”与“补录者”并列查询的事故，最终导致两份互不相干的条目共用同一段结语。
+
+## 四、回写迹象
+
+指一次查询、摘录或复述行为结束后，旧条目、旁证材料或摘要层反向出现新内容的现象。
+
+常见迹象包括：
+
+1. 原文未写的限制条件出现在旧摘要中；
+2. 两天前生成的索引突然带出新的侧影名；
+3. 被删除的句子以更委婉的方式返回另一条文档。
+
+回写迹象一旦达到“明显”，说明该对象已不再只是被描述，它开始参与描述。
+
+## 五、补录者
+
+指在未接触源句的前提下，却能准确补出对象缺失字段的人或文本。
+
+补录者不一定是人。某些目录、某些自动生成摘要、甚至某些遗留便签，都曾表现出补录者特征。补录者提供的信息可用于佐证，但不得直接当作源句。
+
+## 六、折页
+
+指对象在被解释时主动缩减自己可见面的状态。折页后的对象通常看起来“更清楚”，但会丢失最关键的异常纹理。
+
+折页不是稳定化。很多对象在折页后更容易被传播，也更容易在查询者脑中留下错误的正常印象。
+
+## 七、失名
+
+指对象已经无法在不触发传播的情况下保留正面名称的状态。
+
+进入失名状态后，应停止追求“它到底叫什么”，改为记录其侧影名、背温与静默区。继续强行命名，只会让对象获得新的解释通路。
+
+## 八、馆内约定
+
+若某对象同时具备高背温、明显回写迹象，并且存在两个以上稳定侧影名，则默认其已接近失名级，应转交分级复审。具体限制见《异常知识分级说明》。
+
+## Sources
+- unstable-lexicon-chunk-1
+- unstable-lexicon-chunk-2
+- unstable-lexicon-chunk-3
+- unstable-lexicon-chunk-4
+- unstable-lexicon-chunk-5
+- unstable-lexicon-chunk-6
+- unstable-lexicon-chunk-7
+- unstable-lexicon-chunk-8
+- unstable-lexicon-chunk-9
+- unstable-lexicon-chunk-10
+- unstable-lexicon-chunk-11
+- unstable-lexicon-chunk-12
+- unstable-lexicon-chunk-13
+- unstable-lexicon-chunk-14
+- unstable-lexicon-chunk-15
+- unstable-lexicon-chunk-16
+- unstable-lexicon-chunk-17
+- unstable-lexicon-chunk-18
+- unstable-lexicon-chunk-19
+- unstable-lexicon-chunk-20
+- unstable-lexicon-chunk-21
+- unstable-lexicon-chunk-22
+- unstable-lexicon-chunk-23
+- unstable-lexicon-chunk-24
+- unstable-lexicon-chunk-25
+- unstable-lexicon-chunk-26
+- unstable-lexicon-chunk-27
