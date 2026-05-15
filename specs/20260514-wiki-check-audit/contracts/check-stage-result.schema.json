@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CheckStageResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["phase", "status", "summary", "findings", "evidence_limits"],
+  "properties": {
+    "phase": {
+      "type": "string",
+      "enum": ["phase1", "phase2"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["passed", "findings", "blocked", "failed"]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "location", "message", "evidence_refs"],
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string",
+            "minLength": 1
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "evidence_limits": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "const": "phase1"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "items": {
+              "properties": {
+                "kind": {
+                  "enum": ["无来源陈述", "过强结论", "证据受限"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "const": "phase2"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "items": {
+              "properties": {
+                "kind": {
+                  "enum": ["关联文件不正确", "证据受限"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
