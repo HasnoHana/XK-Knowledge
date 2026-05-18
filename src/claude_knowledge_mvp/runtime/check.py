@@ -12,7 +12,7 @@ from claude_knowledge_mvp.domain.models import (
     Phase1CheckContext,
     Phase2GlobalContext,
 )
-from claude_knowledge_mvp.prompts.paths import CHECK_PHASE1_PROMPT_PATH, CHECK_PHASE2_PROMPT_PATH
+from claude_knowledge_mvp.prompts.paths import CHECK_PHASE1_PROMPT_PATH, CHECK_PHASE2_PROMPT_PATH, read_repo_prompt_text
 
 
 PHASE_ALLOWED_KINDS = {
@@ -46,9 +46,10 @@ def build_check_target(repo_root: Path, wiki_relative_path: str) -> CheckTarget:
 def build_phase1_context(repo_root: Path, wiki_relative_path: str) -> Phase1CheckContext:
     target = build_check_target(repo_root=repo_root, wiki_relative_path=wiki_relative_path)
     constitution_text = _read_required_file(repo_root / "CONSTITUTION.md", "CONSTITUTION.md is required")
-    prompt_text = _read_required_file(
-        repo_root / CHECK_PHASE1_PROMPT_PATH,
-        "phase1 prompt pack is required",
+    prompt_text = read_repo_prompt_text(
+        repo_root=repo_root,
+        prompt_path=CHECK_PHASE1_PROMPT_PATH,
+        missing_message="phase1 prompt pack is required",
     )
     page_content = (repo_root / wiki_relative_path).read_text(encoding="utf-8")
     declared_citations = _extract_declared_citations(repo_root=repo_root, page_content=page_content)
@@ -71,9 +72,10 @@ def build_phase2_context(repo_root: Path, phase1_context: Phase1CheckContext, ph
 
     index_text = _read_required_file(repo_root / "WIKI" / "INDEX.md", "WIKI/INDEX.md is required")
     link_text = _read_optional_file(repo_root / "WIKI" / "LINK.md")
-    prompt_text = _read_required_file(
-        repo_root / CHECK_PHASE2_PROMPT_PATH,
-        "phase2 prompt pack is required",
+    prompt_text = read_repo_prompt_text(
+        repo_root=repo_root,
+        prompt_path=CHECK_PHASE2_PROMPT_PATH,
+        missing_message="phase2 prompt pack is required",
     )
 
     return Phase2GlobalContext(

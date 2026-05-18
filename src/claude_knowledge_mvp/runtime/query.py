@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+import json
 from pathlib import Path
 import re
 
-from claude_knowledge_mvp.prompts.paths import QUERY_PROMPT_PATH
+from claude_knowledge_mvp.domain.models import QueryAnswer, QueryCitation
+from claude_knowledge_mvp.prompts.paths import QUERY_PROMPT_PATH, read_repo_prompt_text
 
 
 @dataclass(slots=True)
@@ -32,14 +34,11 @@ def build_query_context(repo_root: Path, question: str) -> QueryContext:
         raise ValueError("question must not be empty")
 
     constitution_path = repo_root / "CONSTITUTION.md"
-    prompt_path = repo_root / QUERY_PROMPT_PATH
     index_path = repo_root / "WIKI" / "INDEX.md"
     link_path = repo_root / "WIKI" / "LINK.md"
 
     if not constitution_path.exists():
         raise ValueError("CONSTITUTION.md is required")
-    if not prompt_path.exists():
-        raise ValueError("query prompt pack is required")
     if not index_path.exists():
         raise ValueError("WIKI/INDEX.md is required")
 
@@ -57,7 +56,11 @@ def build_query_context(repo_root: Path, question: str) -> QueryContext:
         global_link_excerpt=link_text,
         matched_pages=matched_pages,
         linked_pages=linked_pages,
-        prompt_pack=prompt_path.read_text(encoding="utf-8"),
+        prompt_pack=read_repo_prompt_text(
+            repo_root=repo_root,
+            prompt_path=QUERY_PROMPT_PATH,
+            missing_message="query prompt pack is required",
+        ),
     )
 
 
@@ -91,28 +94,63 @@ def prepare_query_payload(repo_root: Path, question: str) -> dict:
 
 
 def execute_query(repo_root: Path, question: str, answer_generator=None) -> dict:
-    payload = prepare_query_payload(repo_root=repo_root, question=question)
+    try:
+        payload = prepare_query_payload(repo_root=repo_root, question=question)
+    except ValueError as exc:
+        return _error_result(error_code="input_error", error_stage="prepare_query_payload", diagnostics=[str(exc)])
+
     if not payload["matched_pages"]:
-        return {
-            "answer": "Not enough knowledge found in the local knowledge base.",
-            "citations": [],
-            "raw_chunks": [],
-        }
+        return asdict(
+            QueryAnswer(
+                answer="Not enough knowledge found in the local knowledge base.",
+                evidence_limits=["No matching wiki pages were found in WIKI/INDEX.md for the current question."],
+            )
+        )
 
     generator = answer_generator or generate_answer_with_claude
-    answer = generator(payload)
-    if not isinstance(answer, dict):
-        raise ValueError("query answer must be a dict")
-
-    return {
-        "answer": answer.get("answer", ""),
-        "citations": answer.get("citations", []),
-        "raw_chunks": answer.get("raw_chunks", []),
-    }
+    try:
+        answer = generator(payload)
+        return asdict(_normalize_query_answer(answer))
+    except ValueError as exc:
+        return _error_result(error_code="query_result_error", error_stage="generate_answer_with_claude", diagnostics=[str(exc)])
 
 
 def generate_answer_with_claude(payload: dict) -> dict:
     raise ValueError("Claude-backed query answer generation is not wired yet")
+
+
+def render_query_result_json(result: dict) -> str:
+    return json.dumps(result, ensure_ascii=False, indent=2)
+
+
+def _normalize_query_answer(answer: dict) -> QueryAnswer:
+    if not isinstance(answer, dict):
+        raise ValueError("query answer must be a dict")
+
+    citations = [_normalize_query_citation(item) for item in answer.get("citations", [])]
+    evidence_limits = [str(item) for item in answer.get("evidence_limits", [])]
+    return QueryAnswer(
+        answer=str(answer.get("answer", "")),
+        citations=citations,
+        evidence_limits=evidence_limits,
+    )
+
+
+def _normalize_query_citation(citation: dict) -> QueryCitation:
+    if not isinstance(citation, dict):
+        raise ValueError("query citation must be a dict")
+
+    page_id = str(citation.get("page_id", "")).strip()
+    wiki_path = str(citation.get("wiki_path", citation.get("path", ""))).strip()
+    raw_chunk_ids = citation.get("raw_chunk_ids", citation.get("source_chunks", []))
+    if not isinstance(raw_chunk_ids, list):
+        raise ValueError("query citation raw_chunk_ids must be a list")
+
+    return QueryCitation(
+        page_id=page_id,
+        wiki_path=wiki_path,
+        raw_chunk_ids=[str(item) for item in raw_chunk_ids],
+    )
 
 
 def _match_page_ids(question: str, index_text: str) -> list[str]:
@@ -164,3 +202,14 @@ def _read_query_page(repo_root: Path, page_id: str) -> QueryPage:
         content=content,
         source_chunks=re.findall(r"^- ([^\n]+)$", content, flags=re.MULTILINE),
     )
+
+
+def _error_result(*, error_code: str, error_stage: str, diagnostics: list[str]) -> dict:
+    return {
+        "answer": "",
+        "citations": [],
+        "evidence_limits": [],
+        "error_code": error_code,
+        "error_stage": error_stage,
+        "diagnostics": diagnostics,
+    }

@@ -36,6 +36,20 @@ class HelperCommitResult:
 
 
 @dataclass(slots=True)
+class QueryCitation:
+    page_id: str
+    wiki_path: str
+    raw_chunk_ids: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class QueryAnswer:
+    answer: str
+    citations: list[QueryCitation] = field(default_factory=list)
+    evidence_limits: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class CheckTarget:
     wiki_path: str
     page_id: str
@@ -83,8 +97,8 @@ class Phase2GlobalContext:
 @dataclass(slots=True)
 class CheckReport:
     target: CheckTarget
-    phase1_findings: list[CheckFinding]
-    phase2_findings: list[CheckFinding]
-    evidence_limits: list[str]
-    status: str
-    report_markdown: str
+    phase1_findings: list[CheckFinding] = field(default_factory=list)
+    phase2_findings: list[CheckFinding] = field(default_factory=list)
+    evidence_limits: list[str] = field(default_factory=list)
+    status: str = "failed"
+    report_markdown: str = ""

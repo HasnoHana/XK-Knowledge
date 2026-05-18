@@ -25,13 +25,19 @@ For factual content, the provided WIKI page excerpts and their listed source chu
 - Do not introduce outside facts or background knowledge.
 - Prefer matched pages first.
 - Use linked pages only as one-hop supporting context.
-- If evidence is weak or missing, say so explicitly.
+- If evidence is weak, partial, or missing, say so explicitly.
+- Do not fabricate certainty when the repository evidence is insufficient.
 
-## Output rules
+## Output contract
 
-Return markdown.
-Keep the answer lightly structured unless the user asked for a formal format.
-Always include:
-- a direct answer
-- supporting WIKI page references
-- the Raw chunk references that back those WIKI pages
+Return one JSON object with:
+- `answer`: answer text grounded only in repository evidence
+- `citations`: array of citation objects
+- `evidence_limits`: array of explicit evidence boundary notes
+
+Each citation object must include:
+- `page_id`
+- `wiki_path`
+- `raw_chunk_ids`
+
+If no fully supported answer is available, keep `citations` conservative and explain the limit in `evidence_limits`.

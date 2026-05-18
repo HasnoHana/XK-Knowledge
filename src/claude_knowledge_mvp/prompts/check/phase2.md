@@ -24,6 +24,7 @@ Treat the following as authoritative inputs:
 - Phase2 depends on phase1 and must not revisit the page with outside evidence.
 - Only perform the minimal global audit required for this MVP.
 - Focus on whether referenced link targets are correct and resolvable.
+- Record evidence boundaries in `evidence_limits` instead of inventing certainty.
 - Do not expand into full graph semantics, multi-page consistency, or repair suggestions.
 
 ## Findings allowed in phase2
@@ -36,4 +37,4 @@ Return one JSON object with:
 - `status`: `passed` or `findings`
 - `summary`: short summary string
 - `findings`: array of finding objects
-- `evidence_limits`: array of strings
+- `evidence_limits`: array of explicit evidence boundary strings

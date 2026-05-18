@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from claude_knowledge_mvp.prompts.paths import CHECK_PHASE1_PROMPT_PATH, CHECK_PHASE2_PROMPT_PATH, PROMPTS_ROOT
+from claude_knowledge_mvp.prompts.paths import CHECK_PHASE1_PROMPT_PATH, CHECK_PHASE2_PROMPT_PATH
 from claude_knowledge_mvp.runtime.check import (
     build_phase1_context,
     execute_check,
@@ -12,61 +12,28 @@ from claude_knowledge_mvp.runtime.check import (
 
 
 @pytest.fixture()
-def check_repo(tmp_path: Path) -> Path:
-    repo_root = tmp_path
-    (repo_root / "CONSTITUTION.md").write_text("Use only declared repository evidence.\n", encoding="utf-8")
-    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
-    (repo_root / CHECK_PHASE1_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
-    (repo_root / CHECK_PHASE1_PROMPT_PATH).write_text(
-        "Phase1 prompt.\n",
-        encoding="utf-8",
+def check_repo(repo_factory) -> Path:
+    return repo_factory(
+        files={
+            CHECK_PHASE1_PROMPT_PATH.as_posix(): "Phase1 prompt.\n",
+            CHECK_PHASE2_PROMPT_PATH.as_posix(): "Phase2 prompt.\n",
+            "RAW/article/target-page.md": "Target raw content.\n",
+            "WIKI/notes/LAWS.md": "Notes law.\n",
+            "WIKI/notes/pages/target-page.md": (
+                "# Target Page\n\nTarget content.\n\n## Sources\n- target-page-chunk-1\n- missing-raw-chunk-2\n"
+            ),
+            "WIKI/notes/pages/related-page.md": "# Related Page\n\n## Sources\n- related-page-chunk-1\n",
+            "WIKI/notes/pages/no-sources.md": "# No Sources\n\nThis page forgot to declare evidence.\n",
+            "WIKI/architecture/pages/other-page.md": "# Other Page\n\n## Sources\n- other-page-chunk-1\n",
+            "WIKI/INDEX.md": "# Index\n- target -> target-page\n- related -> related-page\n",
+            "WIKI/LINK.md": (
+                "# Link Graph\n"
+                "- target-page -[related]-> related-page (valid target)\n"
+                "- target-page -[related]-> missing-page (broken target)\n"
+                "- other-page -[related]-> related-page (unrelated)\n"
+            ),
+        }
     )
-    (repo_root / CHECK_PHASE2_PROMPT_PATH).write_text(
-        "Phase2 prompt.\n",
-        encoding="utf-8",
-    )
-
-    (repo_root / "RAW" / "article").mkdir(parents=True)
-    (repo_root / "RAW" / "article" / "target-page.md").write_text(
-        "Target raw content.\n",
-        encoding="utf-8",
-    )
-
-    (repo_root / "WIKI" / "notes" / "pages").mkdir(parents=True)
-    (repo_root / "WIKI" / "notes" / "LAWS.md").write_text(
-        "Notes law.\n",
-        encoding="utf-8",
-    )
-    (repo_root / "WIKI" / "notes" / "pages" / "target-page.md").write_text(
-        "# Target Page\n\nTarget content.\n\n## Sources\n- target-page-chunk-1\n- missing-raw-chunk-2\n",
-        encoding="utf-8",
-    )
-    (repo_root / "WIKI" / "notes" / "pages" / "related-page.md").write_text(
-        "# Related Page\n\n## Sources\n- related-page-chunk-1\n",
-        encoding="utf-8",
-    )
-    (repo_root / "WIKI" / "notes" / "pages" / "no-sources.md").write_text(
-        "# No Sources\n\nThis page forgot to declare evidence.\n",
-        encoding="utf-8",
-    )
-    (repo_root / "WIKI" / "architecture" / "pages").mkdir(parents=True)
-    (repo_root / "WIKI" / "architecture" / "pages" / "other-page.md").write_text(
-        "# Other Page\n\n## Sources\n- other-page-chunk-1\n",
-        encoding="utf-8",
-    )
-
-    (repo_root / "WIKI" / "INDEX.md").write_text(
-        "# Index\n- target -> target-page\n- related -> related-page\n",
-        encoding="utf-8",
-    )
-    (repo_root / "WIKI" / "LINK.md").write_text(
-        "# Link Graph\n"
-        "- target-page -[related]-> related-page (valid target)\n"
-        "- target-page -[related]-> missing-page (broken target)\n"
-        "- other-page -[related]-> related-page (unrelated)\n",
-        encoding="utf-8",
-    )
-    return repo_root
 
 
 def test_prepare_check_payload_includes_declared_citations_and_candidate_laws(check_repo: Path):

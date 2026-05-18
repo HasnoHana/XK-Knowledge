@@ -24,6 +24,7 @@ Do not use outside facts, unstated Raw content, linked wiki pages, or prior know
 
 - Only inspect the target wiki page and the citations explicitly declared in that page.
 - If evidence is missing, damaged, or insufficient, say so explicitly.
+- Record evidence boundaries in `evidence_limits` instead of inventing certainty.
 - Do not repair the page.
 - Do not suggest edits.
 - Do not judge INDEX or LINK in phase1.
@@ -39,4 +40,4 @@ Return one JSON object with:
 - `status`: `passed` or `findings`
 - `summary`: short summary string
 - `findings`: array of finding objects
-- `evidence_limits`: array of strings
+- `evidence_limits`: array of explicit evidence boundary strings

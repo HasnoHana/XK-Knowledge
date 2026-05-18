@@ -2,38 +2,22 @@ from pathlib import Path
 
 import pytest
 
-from claude_knowledge_mvp.prompts.paths import PROMPTS_ROOT, QUERY_PROMPT_PATH
+from claude_knowledge_mvp.prompts.paths import QUERY_PROMPT_PATH
 from claude_knowledge_mvp.runtime.query import build_query_context, execute_query, prepare_query_payload
 
 
 @pytest.fixture()
-def query_repo(tmp_path: Path) -> Path:
-    repo_root = tmp_path
-    (repo_root / "CONSTITUTION.md").write_text("Only repository evidence may be used.\n", encoding="utf-8")
-    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
-    (repo_root / QUERY_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
-    (repo_root / QUERY_PROMPT_PATH).write_text(
-        "Answer with citations and Raw chunks.\n",
-        encoding="utf-8",
+def query_repo(repo_factory) -> Path:
+    return repo_factory(
+        files={
+            "CONSTITUTION.md": "Only repository evidence may be used.\n",
+            QUERY_PROMPT_PATH.as_posix(): "Answer with citations and Raw chunks.\n",
+            "WIKI/INDEX.md": "# Index\n- paxos -> paxos\n- raft -> raft\n",
+            "WIKI/LINK.md": "# Link Graph\n- paxos -[related]-> raft (comparison)\n",
+            "WIKI/architecture/pages/paxos.md": "# Paxos\n\n## Sources\n- paxos-chunk-01\n- paxos-chunk-02\n",
+            "WIKI/architecture/pages/raft.md": "# Raft\n\n## Sources\n- raft-chunk-01\n",
+        }
     )
-    (repo_root / "WIKI" / "architecture" / "pages").mkdir(parents=True)
-    (repo_root / "WIKI" / "INDEX.md").write_text(
-        "# Index\n- paxos -> paxos\n- raft -> raft\n",
-        encoding="utf-8",
-    )
-    (repo_root / "WIKI" / "LINK.md").write_text(
-        "# Link Graph\n- paxos -[related]-> raft (comparison)\n",
-        encoding="utf-8",
-    )
-    (repo_root / "WIKI" / "architecture" / "pages" / "paxos.md").write_text(
-        "# Paxos\n\n## Sources\n- paxos-chunk-01\n- paxos-chunk-02\n",
-        encoding="utf-8",
-    )
-    (repo_root / "WIKI" / "architecture" / "pages" / "raft.md").write_text(
-        "# Raft\n\n## Sources\n- raft-chunk-01\n",
-        encoding="utf-8",
-    )
-    return repo_root
 
 
 def test_build_query_context_matches_index_and_one_hop_links(query_repo: Path):
@@ -76,14 +60,52 @@ def test_execute_query_returns_agent_answer_and_citations(query_repo: Path):
         "paxos",
         answer_generator=lambda payload: {
             "answer": "Paxos uses majority quorums.",
-            "citations": ["WIKI/architecture/pages/paxos.md"],
-            "raw_chunks": ["paxos-chunk-01"],
+            "citations": [
+                {
+                    "page_id": "paxos",
+                    "wiki_path": "WIKI/architecture/pages/paxos.md",
+                    "raw_chunk_ids": ["paxos-chunk-01"],
+                }
+            ],
+            "evidence_limits": ["Linked pages were not needed for this answer."],
         },
     )
 
     assert result["answer"] == "Paxos uses majority quorums."
-    assert result["citations"] == ["WIKI/architecture/pages/paxos.md"]
-    assert result["raw_chunks"] == ["paxos-chunk-01"]
+    assert result["citations"] == [
+        {
+            "page_id": "paxos",
+            "wiki_path": "WIKI/architecture/pages/paxos.md",
+            "raw_chunk_ids": ["paxos-chunk-01"],
+        }
+    ]
+    assert result["evidence_limits"] == ["Linked pages were not needed for this answer."]
+
+
+def test_execute_query_normalizes_legacy_citation_shape(query_repo: Path):
+    result = execute_query(
+        query_repo,
+        "paxos",
+        answer_generator=lambda payload: {
+            "answer": "Paxos uses majority quorums.",
+            "citations": [
+                {
+                    "page_id": "paxos",
+                    "path": "WIKI/architecture/pages/paxos.md",
+                    "source_chunks": ["paxos-chunk-01"],
+                }
+            ],
+        },
+    )
+
+    assert result["citations"] == [
+        {
+            "page_id": "paxos",
+            "wiki_path": "WIKI/architecture/pages/paxos.md",
+            "raw_chunk_ids": ["paxos-chunk-01"],
+        }
+    ]
+    assert result["evidence_limits"] == []
 
 
 def test_execute_query_reports_missing_knowledge_when_no_match(query_repo: Path):
@@ -91,4 +113,28 @@ def test_execute_query_reports_missing_knowledge_when_no_match(query_repo: Path)
 
     assert result["answer"] == "Not enough knowledge found in the local knowledge base."
     assert result["citations"] == []
-    assert result["raw_chunks"] == []
+    assert result["evidence_limits"] == [
+        "No matching wiki pages were found in WIKI/INDEX.md for the current question."
+    ]
+
+
+def test_execute_query_returns_structured_input_error_for_empty_question(query_repo: Path):
+    result = execute_query(query_repo, "   ")
+
+    assert result["answer"] == ""
+    assert result["citations"] == []
+    assert result["evidence_limits"] == []
+    assert result["error_code"] == "input_error"
+    assert result["error_stage"] == "prepare_query_payload"
+    assert result["diagnostics"] == ["question must not be empty"]
+
+
+def test_execute_query_returns_structured_result_error_for_invalid_generator_output(query_repo: Path):
+    result = execute_query(query_repo, "paxos", answer_generator=lambda payload: "not a dict")
+
+    assert result["answer"] == ""
+    assert result["citations"] == []
+    assert result["evidence_limits"] == []
+    assert result["error_code"] == "query_result_error"
+    assert result["error_stage"] == "generate_answer_with_claude"
+    assert result["diagnostics"] == ["query answer must be a dict"]

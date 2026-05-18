@@ -6,7 +6,11 @@ from pathlib import Path
 
 from claude_knowledge_mvp.domain.models import HelperCommitResult, RawDocument, SkillRuntimeContext
 from claude_knowledge_mvp.helpers.ingest_commit_helper import commit_mutation_set, validate_mutation_set
-from claude_knowledge_mvp.prompts.paths import INGEST_PREPARE_OUTPUT_SCHEMA_PATH, INGEST_PROMPT_PATH
+from claude_knowledge_mvp.prompts.paths import (
+    INGEST_PREPARE_OUTPUT_SCHEMA_PATH,
+    INGEST_PROMPT_PATH,
+    read_repo_prompt_text,
+)
 
 PREPARE_OUTPUT_SCHEMA_NAME = "xk-ingest-prepare-output"
 PREPARE_OUTPUT_SCHEMA_VERSION = "1.0"
@@ -29,11 +33,8 @@ def build_context(repo_root: Path, raw_relative_path: str) -> SkillRuntimeContex
         raise ValueError("raw file must live under RAW/")
 
     constitution_path = repo_root / "CONSTITUTION.md"
-    prompt_path = repo_root / INGEST_PROMPT_PATH
     if not constitution_path.exists():
         raise ValueError("CONSTITUTION.md is required")
-    if not prompt_path.exists():
-        raise ValueError("ingest prompt pack is required")
 
     raw_document = RawDocument(
         raw_id=raw_path.stem,
@@ -49,7 +50,11 @@ def build_context(repo_root: Path, raw_relative_path: str) -> SkillRuntimeContex
         candidate_laws=_load_candidate_laws(repo_root),
         global_index_excerpt=_read_optional_file(repo_root / "WIKI" / "INDEX.md"),
         global_link_excerpt=_read_optional_file(repo_root / "WIKI" / "LINK.md"),
-        prompt_pack=prompt_path.read_text(encoding="utf-8"),
+        prompt_pack=read_repo_prompt_text(
+            repo_root=repo_root,
+            prompt_path=INGEST_PROMPT_PATH,
+            missing_message="ingest prompt pack is required",
+        ),
     )
 
 
