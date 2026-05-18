@@ -5,10 +5,17 @@ import pytest
 
 from claude_knowledge_mvp.helpers.ingest_commit_helper import (
     MUTATION_SET_SCHEMA_NAME,
+    MUTATION_SET_SCHEMA_PATH,
     MUTATION_SET_SCHEMA_VERSION,
     commit_mutation_set,
     validate_commit_ready_mutation,
     validate_mutation_set,
+)
+from claude_knowledge_mvp.prompts.paths import (
+    INGEST_MUTATION_SET_SCHEMA_PATH,
+    INGEST_PREPARE_OUTPUT_SCHEMA_PATH,
+    INGEST_PROMPT_PATH,
+    PROMPTS_ROOT,
 )
 from claude_knowledge_mvp.runtime.ingest import (
     PREPARE_OUTPUT_SCHEMA_NAME,
@@ -21,6 +28,20 @@ from claude_knowledge_mvp.runtime.ingest import (
     run_ingest,
 )
 from claude_knowledge_mvp.runtime.ingest_cli import main as ingest_cli_main
+
+
+def test_ingest_runtime_and_helper_use_shared_ingest_prompt_paths():
+    from claude_knowledge_mvp.runtime.ingest import PREPARE_OUTPUT_SCHEMA_PATH
+
+    assert INGEST_PROMPT_PATH.as_posix() == "src/claude_knowledge_mvp/prompts/ingest/prompt.md"
+    assert INGEST_PREPARE_OUTPUT_SCHEMA_PATH.as_posix() == (
+        "src/claude_knowledge_mvp/prompts/ingest/prepare_output_schema.json"
+    )
+    assert INGEST_MUTATION_SET_SCHEMA_PATH.as_posix() == (
+        "src/claude_knowledge_mvp/prompts/ingest/mutation_set_schema.json"
+    )
+    assert PREPARE_OUTPUT_SCHEMA_PATH == INGEST_PREPARE_OUTPUT_SCHEMA_PATH
+    assert MUTATION_SET_SCHEMA_PATH == INGEST_MUTATION_SET_SCHEMA_PATH
 
 
 def sample_mutation_set(
@@ -176,8 +197,9 @@ def test_prepare_ingest_payload_collects_runtime_context(tmp_path: Path):
         encoding="utf-8",
     )
     (repo_root / "CONSTITUTION.md").write_text("Only cited knowledge may be committed.\n", encoding="utf-8")
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts").mkdir(parents=True)
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md").write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
+    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
+    (repo_root / INGEST_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / INGEST_PROMPT_PATH).write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
     (repo_root / "WIKI").mkdir(parents=True)
     (repo_root / "WIKI" / "INDEX.md").write_text("# Index\n- existing topic -> page-a\n", encoding="utf-8")
     (repo_root / "WIKI" / "LINK.md").write_text("# Link Graph\n- page-a -[related]-> page-b\n", encoding="utf-8")
@@ -306,8 +328,9 @@ def test_execute_ingest_accepts_session_mutation_file(tmp_path: Path):
         encoding="utf-8",
     )
     (repo_root / "CONSTITUTION.md").write_text("Only cited knowledge may be committed.\n", encoding="utf-8")
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts").mkdir(parents=True)
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md").write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
+    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
+    (repo_root / INGEST_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / INGEST_PROMPT_PATH).write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
     mutation_path = repo_root / "mutation.json"
     mutation_path.write_text(json.dumps(sample_mutation_set()), encoding="utf-8")
 
@@ -376,8 +399,9 @@ def test_execute_ingest_commits_from_direct_command_flow(tmp_path: Path):
         encoding="utf-8",
     )
     (repo_root / "CONSTITUTION.md").write_text("Only cited knowledge may be committed.\n", encoding="utf-8")
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts").mkdir(parents=True)
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md").write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
+    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
+    (repo_root / INGEST_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / INGEST_PROMPT_PATH).write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
 
     result = execute_ingest(
         repo_root=repo_root,
@@ -401,8 +425,9 @@ def test_execute_ingest_rejects_invalid_model_output(tmp_path: Path):
         encoding="utf-8",
     )
     (repo_root / "CONSTITUTION.md").write_text("Only cited knowledge may be committed.\n", encoding="utf-8")
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts").mkdir(parents=True)
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md").write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
+    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
+    (repo_root / INGEST_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / INGEST_PROMPT_PATH).write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
 
     result = execute_ingest(
         repo_root=repo_root,
@@ -439,8 +464,9 @@ def test_execute_ingest_commits_from_session_supplied_mutation_json(tmp_path: Pa
         encoding="utf-8",
     )
     (repo_root / "CONSTITUTION.md").write_text("Only cited knowledge may be committed.\n", encoding="utf-8")
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts").mkdir(parents=True)
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md").write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
+    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
+    (repo_root / INGEST_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / INGEST_PROMPT_PATH).write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
     monkeypatch.setenv("XK_INGEST_MUTATION_JSON", json.dumps(sample_mutation_set(), ensure_ascii=False))
 
     result = execute_ingest(
@@ -461,8 +487,9 @@ def test_execute_ingest_returns_structured_failure_when_session_mutation_missing
         encoding="utf-8",
     )
     (repo_root / "CONSTITUTION.md").write_text("Only cited knowledge may be committed.\n", encoding="utf-8")
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts").mkdir(parents=True)
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md").write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
+    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
+    (repo_root / INGEST_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / INGEST_PROMPT_PATH).write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
     monkeypatch.delenv("XK_INGEST_MUTATION_JSON", raising=False)
 
     result = execute_ingest(
@@ -489,8 +516,9 @@ def test_cli_run_flow_returns_committed_json(tmp_path: Path, monkeypatch: pytest
         encoding="utf-8",
     )
     (repo_root / "CONSTITUTION.md").write_text("Only cited knowledge may be committed.\n", encoding="utf-8")
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts").mkdir(parents=True)
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md").write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
+    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
+    (repo_root / INGEST_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / INGEST_PROMPT_PATH).write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
     monkeypatch.setenv("XK_INGEST_MUTATION_JSON", json.dumps(sample_mutation_set(), ensure_ascii=False))
     monkeypatch.setattr(
         "sys.argv",
@@ -519,8 +547,9 @@ def test_cli_run_flow_accepts_session_mutation_file(tmp_path: Path, monkeypatch:
         encoding="utf-8",
     )
     (repo_root / "CONSTITUTION.md").write_text("Only cited knowledge may be committed.\n", encoding="utf-8")
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts").mkdir(parents=True)
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md").write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
+    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
+    (repo_root / INGEST_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / INGEST_PROMPT_PATH).write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
     mutation_path = repo_root / "mutation.json"
     mutation_path.write_text(json.dumps(sample_mutation_set()), encoding="utf-8")
     monkeypatch.delenv("XK_INGEST_MUTATION_JSON", raising=False)
@@ -553,8 +582,9 @@ def test_cli_run_flow_returns_structured_failure_when_session_mutation_missing(t
         encoding="utf-8",
     )
     (repo_root / "CONSTITUTION.md").write_text("Only cited knowledge may be committed.\n", encoding="utf-8")
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts").mkdir(parents=True)
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md").write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
+    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
+    (repo_root / INGEST_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / INGEST_PROMPT_PATH).write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
     monkeypatch.delenv("XK_INGEST_MUTATION_JSON", raising=False)
     monkeypatch.setattr(
         "sys.argv",
@@ -589,8 +619,9 @@ def test_execute_ingest_debug_returns_mutation_on_success(tmp_path: Path):
         encoding="utf-8",
     )
     (repo_root / "CONSTITUTION.md").write_text("Only cited knowledge may be committed.\n", encoding="utf-8")
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts").mkdir(parents=True)
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md").write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
+    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
+    (repo_root / INGEST_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / INGEST_PROMPT_PATH).write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
 
     result = execute_ingest_debug(
         repo_root=repo_root,
@@ -612,8 +643,9 @@ def test_cli_debug_run_returns_mutation_json(tmp_path: Path, monkeypatch: pytest
         encoding="utf-8",
     )
     (repo_root / "CONSTITUTION.md").write_text("Only cited knowledge may be committed.\n", encoding="utf-8")
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts").mkdir(parents=True)
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md").write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
+    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
+    (repo_root / INGEST_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / INGEST_PROMPT_PATH).write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
 
     monkeypatch.setattr(
         "claude_knowledge_mvp.runtime.ingest.generate_mutation_with_claude",
@@ -647,8 +679,9 @@ def test_cli_prepare_and_commit_flow(tmp_path: Path, monkeypatch: pytest.MonkeyP
         encoding="utf-8",
     )
     (repo_root / "CONSTITUTION.md").write_text("Only cited knowledge may be committed.\n", encoding="utf-8")
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts").mkdir(parents=True)
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md").write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
+    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
+    (repo_root / INGEST_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / INGEST_PROMPT_PATH).write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
     mutation_path = repo_root / "mutation.json"
     mutation_path.write_text(json.dumps(sample_mutation_set()), encoding="utf-8")
 
@@ -696,8 +729,9 @@ def test_run_ingest_writes_wiki_index_link_and_log(tmp_path: Path):
         encoding="utf-8",
     )
     (repo_root / "CONSTITUTION.md").write_text("Only cited knowledge may be committed.\n", encoding="utf-8")
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts").mkdir(parents=True)
-    (repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md").write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
+    (repo_root / PROMPTS_ROOT).mkdir(parents=True)
+    (repo_root / INGEST_PROMPT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / INGEST_PROMPT_PATH).write_text("Return a KnowledgeMutationSet.\n", encoding="utf-8")
 
     result = run_ingest(
         repo_root=repo_root,

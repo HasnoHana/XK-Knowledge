@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 import re
 
+from claude_knowledge_mvp.prompts.paths import QUERY_PROMPT_PATH
+
 
 @dataclass(slots=True)
 class QueryPage:
@@ -30,7 +32,7 @@ def build_query_context(repo_root: Path, question: str) -> QueryContext:
         raise ValueError("question must not be empty")
 
     constitution_path = repo_root / "CONSTITUTION.md"
-    prompt_path = repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "query.md"
+    prompt_path = repo_root / QUERY_PROMPT_PATH
     index_path = repo_root / "WIKI" / "INDEX.md"
     link_path = repo_root / "WIKI" / "LINK.md"
 

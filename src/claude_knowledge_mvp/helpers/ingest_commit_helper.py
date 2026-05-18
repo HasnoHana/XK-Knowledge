@@ -7,10 +7,11 @@ from pathlib import Path
 from typing import Iterable
 
 from claude_knowledge_mvp.domain.models import HelperCommitResult
+from claude_knowledge_mvp.prompts.paths import INGEST_MUTATION_SET_SCHEMA_PATH
 
 MUTATION_SET_SCHEMA_NAME = "xk-ingest-mutation-set"
 MUTATION_SET_SCHEMA_VERSION = "1.0"
-MUTATION_SET_SCHEMA_PATH = Path("src") / "claude_knowledge_mvp" / "prompts" / "mutation_set_schema.json"
+MUTATION_SET_SCHEMA_PATH = INGEST_MUTATION_SET_SCHEMA_PATH
 REQUIRED_MUTATION_KEYS = {
     "schema_name",
     "schema_version",

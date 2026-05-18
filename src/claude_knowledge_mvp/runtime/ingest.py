@@ -6,10 +6,11 @@ from pathlib import Path
 
 from claude_knowledge_mvp.domain.models import HelperCommitResult, RawDocument, SkillRuntimeContext
 from claude_knowledge_mvp.helpers.ingest_commit_helper import commit_mutation_set, validate_mutation_set
+from claude_knowledge_mvp.prompts.paths import INGEST_PREPARE_OUTPUT_SCHEMA_PATH, INGEST_PROMPT_PATH
 
 PREPARE_OUTPUT_SCHEMA_NAME = "xk-ingest-prepare-output"
 PREPARE_OUTPUT_SCHEMA_VERSION = "1.0"
-PREPARE_OUTPUT_SCHEMA_PATH = Path("src") / "claude_knowledge_mvp" / "prompts" / "prepare_output_schema.json"
+PREPARE_OUTPUT_SCHEMA_PATH = INGEST_PREPARE_OUTPUT_SCHEMA_PATH
 EXPECTED_OUTPUT_KEYS = [
     "raw_chunks",
     "wiki_page_draft",
@@ -28,7 +29,7 @@ def build_context(repo_root: Path, raw_relative_path: str) -> SkillRuntimeContex
         raise ValueError("raw file must live under RAW/")
 
     constitution_path = repo_root / "CONSTITUTION.md"
-    prompt_path = repo_root / "src" / "claude_knowledge_mvp" / "prompts" / "ingest.md"
+    prompt_path = repo_root / INGEST_PROMPT_PATH
     if not constitution_path.exists():
         raise ValueError("CONSTITUTION.md is required")
     if not prompt_path.exists():

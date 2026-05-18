@@ -10,7 +10,7 @@ Do not treat this task as summarization. Treat it as knowledge organization unde
 
 ## Source of truth
 
-Use the prepare payload as the full ingest context and expect it to match `src/claude_knowledge_mvp/prompts/prepare_output_schema.json`.
+Use the prepare payload as the full ingest context and expect it to match `src/claude_knowledge_mvp/prompts/ingest/prepare_output_schema.json`.
 Treat the following as authoritative inputs:
 - `schema_name`
 - `schema_version`
